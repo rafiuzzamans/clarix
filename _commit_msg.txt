@@ -1,12 +1,13 @@
-Add README.md: project overview, research questions, tech stack
+Add docker-compose.yml: postgres, mongodb, redis, mailhog, nginx
 
-Documents the CLARIX project for any reader (marker, supervisor, peer):
+Full local orchestration for all infrastructure services:
 
-- Problem statement: UK financial complaint triage is manual and slow
-- Research questions (RQ1-RQ4) from proposal, cross-referenced
-- Architecture overview: 10 FastAPI microservices + Next.js + MongoDB
-- Dataset references: CFPB Consumer Complaint Database + FinancialPhraseBank
-- Prerequisites: Docker Desktop, Python 3.11+, Node 18+
-- Quick-start: docker compose up --build
+- postgres:15-alpine  — primary relational store (cases, users, audit)
+- mongo:7-jammy       — document store (chat transcripts, audit logs)
+- redis:7-alpine      — session cache and future rate-limiting layer
+- mailhog/mailhog     — SMTP catch-all for automation email testing
+- nginx:alpine        — reverse proxy gateway (port 80)
 
-Will be expanded with ML training steps and demo credentials later.
+All services connected on cs_network bridge.
+Named volumes for postgres_data and mongo_data ensure data persistence
+across container restarts without losing state during development.

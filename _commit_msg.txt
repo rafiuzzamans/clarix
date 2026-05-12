@@ -1,0 +1,12 @@
+Add README.md: project overview, research questions, tech stack
+
+Documents the CLARIX project for any reader (marker, supervisor, peer):
+
+- Problem statement: UK financial complaint triage is manual and slow
+- Research questions (RQ1-RQ4) from proposal, cross-referenced
+- Architecture overview: 10 FastAPI microservices + Next.js + MongoDB
+- Dataset references: CFPB Consumer Complaint Database + FinancialPhraseBank
+- Prerequisites: Docker Desktop, Python 3.11+, Node 18+
+- Quick-start: docker compose up --build
+
+Will be expanded with ML training steps and demo credentials later.

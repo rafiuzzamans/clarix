@@ -1,14 +1,14 @@
-Add database/postgres/02_seed.sql: demo accounts for all 5 role types
+Add database/mongodb/01_init.js: chatbot_transcripts collection with TTL index
 
-Seed data for local development and demonstration video:
+MongoDB used for document storage where flexible schema is needed:
 
-  admin@clarix.local      / admin123     — Admin
-  supervisor@clarix.local / super123     — Supervisor
-  manager@clarix.local    / manager123   — Manager
-  agent1@clarix.local     / agent123     — Agent
-  agent2@clarix.local     / agent123     — Agent
-  customer@clarix.local   / cust123      — Customer
+chatbot_transcripts collection:
+  - session_id (indexed, unique per conversation)
+  - user_id (ref to postgres users.id)
+  - messages: array of {role, content, timestamp, intent_detected}
+  - created_at, resolved_at, escalated_to_case_id
 
-Passwords stored as bcrypt hashes (rounds=12).
-This file runs automatically via postgres entrypoint-initdb.d volume.
-Do NOT use these credentials in any production or staging environment.
+TTL index on created_at: auto-delete transcripts after 90 days
+to comply with data minimisation principle under UK GDPR.
+
+Separate audit_logs collection will be added by audit-service init.

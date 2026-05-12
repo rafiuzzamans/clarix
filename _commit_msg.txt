@@ -1,0 +1,16 @@
+Add nginx/nginx.conf: upstream blocks for all 10 backend services
+
+Nginx acts as the single entry point at port 80, routing requests to:
+  /api/auth/      → auth-service:8001
+  /api/users/     → user-service:8002
+  /api/cases/     → case-service:8003
+  /api/ai/        → ai-service:8004
+  /api/chat/      → chatbot-service:8005
+  /api/automation/→ automation-service:8006
+  /api/notify/    → notification-service:8007
+  /api/analytics/ → analytics-service:8008
+  /api/files/     → file-service:8009
+  /api/audit/     → audit-service:8010
+
+proxy_set_header blocks preserve client IP and host for audit logging.
+Will add rate limiting headers in a later commit once tested.

@@ -1,12 +1,12 @@
-Initial commit: add .gitignore for Python, Node, Docker, ML artefacts
+Add README.md: project overview, research questions, tech stack
 
-Setting up the repository for CLARIX — an Explainable AI financial
-customer service platform built for COM7016 MSc Project.
+Documents the CLARIX project for any reader (marker, supervisor, peer):
 
-.gitignore covers:
-- Python: __pycache__, *.pyc, .pytest_cache, venv/
-- Node/Next.js: node_modules/, .next/, dist/
-- Docker volumes: postgres_data/, mongo_data/
-- ML model binaries: *.pkl, *.pt (too large for git)
-- Secrets: .env (will use .env.example for reference)
-- IDE: .vscode/, .idea/
+- Problem statement: UK financial complaint triage is manual and slow
+- Research questions (RQ1-RQ4) from proposal, cross-referenced
+- Architecture overview: 10 FastAPI microservices + Next.js + MongoDB
+- Dataset references: CFPB Consumer Complaint Database + FinancialPhraseBank
+- Prerequisites: Docker Desktop, Python 3.11+, Node 18+
+- Quick-start: docker compose up --build
+
+Will be expanded with ML training steps and demo credentials later.

@@ -1,0 +1,87 @@
+# ─── Secrets & Environment ────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.log
+
+# ─── Virtual environments ─────────────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ─── ML model artefacts (large binaries) ──────────────────────
+ml/models/*.pkl
+ml/models/*.pt
+ml/models/*.bin
+ml/data/raw/
+ml/data/processed/*.csv
+!ml/models/.gitkeep
+!ml/data/.gitkeep
+!ml/data/processed/.gitkeep
+!ml/data/raw/.gitkeep
+
+# ─── Jupyter ──────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Node / Next.js ───────────────────────────────────────────
+node_modules/
+.next/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+*.tsbuildinfo
+
+# ─── Docker volumes / local databases ────────────────────────
+*.sqlite
+*.db
+postgres_data/
+mongo_data/
+redis_data/
+
+# ─── Uploads / file storage ──────────────────────────────────
+uploads/
+services/file-service/storage/
+
+# ─── IDE ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Extracted archives (datasets — too large for git) ───────
+extracted_3/
+extracted_4/
+extracted_5/
+archive*.zip
+
+# ─── Temp helper scripts ─────────────────────────────────────
+create_git_history.py

@@ -1,0 +1,317 @@
+version: "3.9"
+
+services:
+  # ─── Infrastructure ────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: cs_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - cs_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: cs_mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    volumes:
+      - mongo_data:/data/db
+      - ./database/mongodb:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - cs_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cs_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - cs_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cs_mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - cs_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: cs_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - auth-service
+      - user-service
+      - case-service
+      - ai-service
+      - chatbot-service
+      - automation-service
+      - notification-service
+      - analytics-service
+      - file-service
+      - audit-service
+    networks:
+      - cs_network
+
+  # ─── Backend Microservices ─────────────────────────────────
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: cs_auth
+    env_file: .env
+    environment:
+      SERVICE_NAME: auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/auth-service:/app
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: cs_user
+    env_file: .env
+    environment:
+      SERVICE_NAME: user-service
+    ports:
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/user-service:/app
+    restart: unless-stopped
+
+  case-service:
+    build:
+      context: ./services/case-service
+      dockerfile: Dockerfile
+    container_name: cs_case
+    env_file: .env
+    environment:
+      SERVICE_NAME: case-service
+    ports:
+      - "${CASE_SERVICE_PORT}:${CASE_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/case-service:/app
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    container_name: cs_ai
+    env_file: .env
+    environment:
+      SERVICE_NAME: ai-service
+    ports:
+      - "${AI_SERVICE_PORT}:${AI_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/ai-service:/app
+      - ./ml/models:/app/models:ro
+    restart: unless-stopped
+
+  chatbot-service:
+    build:
+      context: ./services/chatbot-service
+      dockerfile: Dockerfile
+    container_name: cs_chatbot
+    env_file: .env
+    environment:
+      SERVICE_NAME: chatbot-service
+    ports:
+      - "${CHATBOT_SERVICE_PORT}:${CHATBOT_SERVICE_PORT}"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/chatbot-service:/app
+    restart: unless-stopped
+
+  automation-service:
+    build:
+      context: ./services/automation-service
+      dockerfile: Dockerfile
+    container_name: cs_automation
+    env_file: .env
+    environment:
+      SERVICE_NAME: automation-service
+    ports:
+      - "${AUTOMATION_SERVICE_PORT}:${AUTOMATION_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/automation-service:/app
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: cs_notification
+    env_file: .env
+    environment:
+      SERVICE_NAME: notification-service
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
+    depends_on:
+      - mailhog
+    networks:
+      - cs_network
+    volumes:
+      - ./services/notification-service:/app
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: cs_analytics
+    env_file: .env
+    environment:
+      SERVICE_NAME: analytics-service
+    ports:
+      - "${ANALYTICS_SERVICE_PORT}:${ANALYTICS_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/analytics-service:/app
+    restart: unless-stopped
+
+  file-service:
+    build:
+      context: ./services/file-service
+      dockerfile: Dockerfile
+    container_name: cs_file
+    env_file: .env
+    environment:
+      SERVICE_NAME: file-service
+    ports:
+      - "${FILE_SERVICE_PORT}:${FILE_SERVICE_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/file-service:/app
+      - file_storage:/app/storage
+    restart: unless-stopped
+
+  audit-service:
+    build:
+      context: ./services/audit-service
+      dockerfile: Dockerfile
+    container_name: cs_audit
+    env_file: .env
+    environment:
+      SERVICE_NAME: audit-service
+    ports:
+      - "${AUDIT_SERVICE_PORT}:${AUDIT_SERVICE_PORT}"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - cs_network
+    volumes:
+      - ./services/audit-service:/app
+    restart: unless-stopped
+
+  # ─── Web Application ───────────────────────────────────────
+  web-app:
+    build:
+      context: ./web-app
+      dockerfile: Dockerfile
+    container_name: cs_web
+    env_file: .env
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - nginx
+    networks:
+      - cs_network
+    volumes:
+      - ./web-app:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:
+  file_storage:
+
+networks:
+  cs_network:
+    driver: bridge

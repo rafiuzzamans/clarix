@@ -1,15 +1,13 @@
-Scaffold services: add Dockerfile and requirements.txt for all 10 services
+Add FastAPI app skeleton (main.py) for all 10 backend services
 
-Each microservice gets its own Dockerfile based on python:3.11-slim:
-  COPY requirements.txt + pip install (cached layer)
-  COPY app/ source
-  CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+Each main.py includes:
+  - FastAPI() instance with title, description, version metadata
+  - lifespan context manager for startup/shutdown events
+  - GET /health endpoint returning {"status": "ok", "service": name}
+  - CORS middleware configured for localhost:3000 (web-app) and port 80
+  - Router include placeholder (routers will be added per service)
 
-requirements.txt stubs list top-level dependencies for each service:
-  - All services: fastapi, uvicorn[standard], pydantic, httpx
-  - auth-service:  pyjwt, bcrypt, sqlalchemy, asyncpg
-  - ai-service:    scikit-learn, joblib, shap, numpy, pandas
-  - chatbot-service: motor (async MongoDB)
-  - automation-service: aiosmtplib, jinja2, apscheduler
+The /health endpoint is critical — docker-compose depends_on uses it
+to confirm a service is ready before dependent services start.
 
-Pinned versions will be added once tested in next sprint.
+All services will be fleshed out incrementally across the next 2 weeks.

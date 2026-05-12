@@ -1,0 +1,13 @@
+Add FastAPI app skeleton (main.py) for all 10 backend services
+
+Each main.py includes:
+  - FastAPI() instance with title, description, version metadata
+  - lifespan context manager for startup/shutdown events
+  - GET /health endpoint returning {"status": "ok", "service": name}
+  - CORS middleware configured for localhost:3000 (web-app) and port 80
+  - Router include placeholder (routers will be added per service)
+
+The /health endpoint is critical — docker-compose depends_on uses it
+to confirm a service is ready before dependent services start.
+
+All services will be fleshed out incrementally across the next 2 weeks.

@@ -1,21 +1,12 @@
-Add remaining scaffold: ml/, docs/, shared/, mobile-app shell
+Initial commit: add .gitignore for Python, Node, Docker, ML artefacts
 
-ml/ directory structure:
-  ml/data/raw/          — CFPB CSV and FinancialPhraseBank (gitignored)
-  ml/data/processed/    — cleaned datasets (gitignored, generated)
-  ml/models/            — serialised .pkl models (gitignored, generated)
-  ml/notebooks/         — EDA and experiment Jupyter notebooks
-  ml/scripts/           — standalone training and evaluation scripts
-  .gitkeep files so empty dirs are tracked in git
+Setting up the repository for CLARIX — an Explainable AI financial
+customer service platform built for COM7016 MSc Project.
 
-docs/
-  Placeholder for architecture.md and api-reference.md (to be written)
-
-shared/
-  Common Python constants: SLA_HOURS, COMPLAINT_CATEGORIES, PRIORITY_MAP
-
-mobile-app/ (React Native — extension scope per proposal MVP table):
-  Basic screen skeletons: Login, CaseQueue, CaseDetail, CustomerChat
-  Not part of MVP but included as stretch goal demonstration
-
-Scaffold complete. Tomorrow: auth-service full implementation.
+.gitignore covers:
+- Python: __pycache__, *.pyc, .pytest_cache, venv/
+- Node/Next.js: node_modules/, .next/, dist/
+- Docker volumes: postgres_data/, mongo_data/
+- ML model binaries: *.pkl, *.pt (too large for git)
+- Secrets: .env (will use .env.example for reference)
+- IDE: .vscode/, .idea/

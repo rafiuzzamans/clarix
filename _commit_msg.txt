@@ -1,0 +1,13 @@
+Add docker-compose.yml: postgres, mongodb, redis, mailhog, nginx
+
+Full local orchestration for all infrastructure services:
+
+- postgres:15-alpine  — primary relational store (cases, users, audit)
+- mongo:7-jammy       — document store (chat transcripts, audit logs)
+- redis:7-alpine      — session cache and future rate-limiting layer
+- mailhog/mailhog     — SMTP catch-all for automation email testing
+- nginx:alpine        — reverse proxy gateway (port 80)
+
+All services connected on cs_network bridge.
+Named volumes for postgres_data and mongo_data ensure data persistence
+across container restarts without losing state during development.

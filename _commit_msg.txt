@@ -1,14 +1,15 @@
-Add database/mongodb/01_init.js: chatbot_transcripts collection with TTL index
+Scaffold services: add Dockerfile and requirements.txt for all 10 services
 
-MongoDB used for document storage where flexible schema is needed:
+Each microservice gets its own Dockerfile based on python:3.11-slim:
+  COPY requirements.txt + pip install (cached layer)
+  COPY app/ source
+  CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
-chatbot_transcripts collection:
-  - session_id (indexed, unique per conversation)
-  - user_id (ref to postgres users.id)
-  - messages: array of {role, content, timestamp, intent_detected}
-  - created_at, resolved_at, escalated_to_case_id
+requirements.txt stubs list top-level dependencies for each service:
+  - All services: fastapi, uvicorn[standard], pydantic, httpx
+  - auth-service:  pyjwt, bcrypt, sqlalchemy, asyncpg
+  - ai-service:    scikit-learn, joblib, shap, numpy, pandas
+  - chatbot-service: motor (async MongoDB)
+  - automation-service: aiosmtplib, jinja2, apscheduler
 
-TTL index on created_at: auto-delete transcripts after 90 days
-to comply with data minimisation principle under UK GDPR.
-
-Separate audit_logs collection will be added by audit-service init.
+Pinned versions will be added once tested in next sprint.

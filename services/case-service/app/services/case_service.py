@@ -88,7 +88,7 @@ class CaseService:
             title=data.title,
             message=data.message,
             source=data.source,
-            category=data.category or (ai_cat and __builtins__),
+            category=data.category,
             priority=priority,
             customer_id=customer_id,
             sla_deadline=sla_deadline,

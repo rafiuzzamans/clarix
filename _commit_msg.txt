@@ -1,0 +1,16 @@
+Add web-app: Next.js 14 TypeScript scaffold with App Router
+
+Frontend scaffold for the CLARIX 5-portal web application:
+
+- next.config.ts: output standalone, API rewrites to nginx:80
+- tsconfig.json: strict mode, path aliases (@/ → src/)
+- app/layout.tsx: root layout with Geist font and metadata
+- app/globals.css: CSS custom properties for design system
+  (colour tokens, spacing scale, typography, dark mode vars)
+- app/page.tsx: redirect / → /login or /dashboard based on session
+- Dockerfile: node:18-alpine, npm ci, next build, standalone output
+
+Tech choices:
+  Next.js App Router for server-side rendering (better SEO, auth)
+  TypeScript strict for type safety across 5 role portals
+  TanStack Query for server state caching and background refetch

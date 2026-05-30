@@ -88,7 +88,7 @@ class CaseService:
             title=data.title,
             message=data.message,
             source=data.source,
-            category=data.category,
+            category=data.category or (ai_cat and __builtins__),
             priority=priority,
             customer_id=customer_id,
             sla_deadline=sla_deadline,
@@ -112,6 +112,16 @@ class CaseService:
                 case.sentiment = CaseSentiment(ai_sent)
             except (ValueError, TypeError):
                 pass
+                
+        # AI Routing Logic
+        if ai_cat:
+            # Route to AI Agent by default for Agentic resolution
+            case.assigned_to = "99999999-9999-9999-9999-999999999999"
+            case.team_id = "88888888-8888-8888-8888-888888888888"
+            
+            # If we wanted to route to specific human teams based on category:
+            # if ai_cat == "billing": case.team_id = "77777777-..."
+
 
         self.db.add(case)
         await self.db.flush()  # Get generated case_number and id

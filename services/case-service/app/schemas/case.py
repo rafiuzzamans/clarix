@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 
 from app.models.case import CaseCategory, CasePriority, CaseSentiment, CaseSource, CaseStatus
 
@@ -23,8 +24,8 @@ class CaseUpdate(BaseModel):
 
 
 class CaseAssign(BaseModel):
-    agent_id: str
-    team_id: Optional[str] = None
+    agent_id: UUID
+    team_id: Optional[UUID] = None
 
 
 class CaseEscalate(BaseModel):
@@ -32,7 +33,7 @@ class CaseEscalate(BaseModel):
 
 
 class CaseOut(BaseModel):
-    id: str
+    id: UUID
     case_number: int
     title: str
     message: str
@@ -41,9 +42,9 @@ class CaseOut(BaseModel):
     sentiment: Optional[CaseSentiment] = None
     status: CaseStatus
     source: CaseSource
-    customer_id: str
-    assigned_to: Optional[str] = None
-    team_id: Optional[str] = None
+    customer_id: UUID
+    assigned_to: Optional[UUID] = None
+    team_id: Optional[UUID] = None
     is_escalated: bool
     escalated_at: Optional[datetime] = None
     escalation_reason: Optional[str] = None
@@ -76,9 +77,9 @@ class NoteCreate(BaseModel):
 
 
 class NoteOut(BaseModel):
-    id: str
-    case_id: str
-    author_id: str
+    id: UUID
+    case_id: UUID
+    author_id: UUID
     content: str
     is_internal: bool
     created_at: datetime
@@ -88,9 +89,9 @@ class NoteOut(BaseModel):
 
 
 class TimelineOut(BaseModel):
-    id: str
-    case_id: str
-    actor_id: Optional[str] = None
+    id: UUID
+    case_id: UUID
+    actor_id: Optional[UUID] = None
     event_type: str
     description: str
     old_value: Optional[str] = None

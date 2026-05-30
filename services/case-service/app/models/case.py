@@ -1,11 +1,11 @@
 
+import uuid
 import enum
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Text, Boolean, Float, Integer,
-    DateTime, Enum as SAEnum, text
+    DateTime, Enum as SAEnum, text, JSON, UUID
 )
-from sqlalchemy import Text as Text
 from app.core.database import Base
 
 
@@ -26,14 +26,12 @@ class CasePriority(str, enum.Enum):
 
 
 class CaseCategory(str, enum.Enum):
-    billing = "billing"
-    technical_support = "technical_support"
-    account = "account"
-    shipping = "shipping"
-    returns = "returns"
-    product_inquiry = "product_inquiry"
-    complaint = "complaint"
-    feedback = "feedback"
+    mortgage = "mortgage"
+    debt_collection = "debt_collection"
+    credit_reporting = "credit_reporting"
+    bank_account = "bank_account"
+    credit_card = "credit_card"
+    student_loan = "student_loan"
     other = "other"
 
 
@@ -54,7 +52,7 @@ class CaseSource(str, enum.Enum):
 class Case(Base):
     __tablename__ = "cases"
 
-    id                = Column(String(36), primary_key=True, default=lambda: str(__import__('uuid').uuid4()))
+    id                = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     case_number       = Column(Integer, unique=True, nullable=False)
     title             = Column(String(500), nullable=False)
     message           = Column(Text, nullable=False)
@@ -63,9 +61,9 @@ class Case(Base):
     sentiment         = Column(SAEnum(CaseSentiment))
     status            = Column(SAEnum(CaseStatus), default=CaseStatus.open)
     source            = Column(SAEnum(CaseSource), default=CaseSource.web)
-    customer_id       = Column(String(36), nullable=False)
-    assigned_to       = Column(String(36))
-    team_id           = Column(String(36))
+    customer_id       = Column(UUID(as_uuid=True), nullable=False)
+    assigned_to       = Column(UUID(as_uuid=True))
+    team_id           = Column(UUID(as_uuid=True))
     is_escalated      = Column(Boolean, default=False)
     escalated_at      = Column(DateTime(timezone=True))
     escalation_reason = Column(Text)
@@ -73,40 +71,41 @@ class Case(Base):
     resolved_at       = Column(DateTime(timezone=True))
     closed_at         = Column(DateTime(timezone=True))
     resolution_note   = Column(Text)
+    ai_explanation    = Column(Text)
     # AI predictions
     ai_category       = Column(SAEnum(CaseCategory))
     ai_priority       = Column(SAEnum(CasePriority))
     ai_sentiment      = Column(SAEnum(CaseSentiment))
     ai_confidence     = Column(Float)
     ai_overridden     = Column(Boolean, default=False)
-    created_at        = Column(DateTime(timezone=True), server_default=text("(datetime('now'))"))
-    updated_at        = Column(DateTime(timezone=True), server_default=text("(datetime('now'))"), onupdate=datetime.utcnow)
+    created_at        = Column(DateTime(timezone=True), server_default=text("now()"))
+    updated_at        = Column(DateTime(timezone=True), server_default=text("now()"), onupdate=datetime.utcnow)
 
 
 class CaseNote(Base):
     __tablename__ = "case_notes"
 
-    id          = Column(String(36), primary_key=True, default=lambda: str(__import__('uuid').uuid4()))
-    case_id     = Column(String(36), nullable=False)
-    author_id   = Column(String(36), nullable=False)
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id     = Column(UUID(as_uuid=True), nullable=False)
+    author_id   = Column(UUID(as_uuid=True), nullable=False)
     content     = Column(Text, nullable=False)
     is_internal = Column(Boolean, default=True)
-    created_at  = Column(DateTime(timezone=True), server_default=text("(datetime('now'))"))
-    updated_at  = Column(DateTime(timezone=True), server_default=text("(datetime('now'))"), onupdate=datetime.utcnow)
+    created_at  = Column(DateTime(timezone=True), server_default=text("now()"))
+    updated_at  = Column(DateTime(timezone=True), server_default=text("now()"), onupdate=datetime.utcnow)
 
 
 class CaseTimeline(Base):
     __tablename__ = "case_timeline"
 
-    id          = Column(String(36), primary_key=True, default=lambda: str(__import__('uuid').uuid4()))
-    case_id     = Column(String(36), nullable=False)
-    actor_id    = Column(String(36))
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id     = Column(UUID(as_uuid=True), nullable=False)
+    actor_id    = Column(UUID(as_uuid=True))
     event_type  = Column(String(100), nullable=False)
     description = Column(Text, nullable=False)
     old_value   = Column(Text)
     new_value   = Column(Text)
-    extra_data   = Column(Text, nullable=True)
-    created_at  = Column(DateTime(timezone=True), server_default=text("(datetime('now'))"))
+    extra_metadata = Column("metadata", JSON, nullable=True)
+    created_at  = Column(DateTime(timezone=True), server_default=text("now()"))
 
 
 

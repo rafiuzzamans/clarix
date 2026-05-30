@@ -18,8 +18,8 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.models.user import RefreshToken, User, UserRole, UserStatus
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from app.models.user import RefreshToken, User, UserStatus
+from app.schemas.auth import LoginRequest, TokenResponse, UserOut
 
 
 def _hash_token(token: str) -> str:
@@ -52,102 +52,6 @@ async def _emit_audit(action: str, actor_id: Optional[str], resource_id: Optiona
 class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
-
-    async def register(
-        self,
-        request: RegisterRequest,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-    ) -> TokenResponse:
-        """Create a new customer account and return tokens immediately."""
-        result = await self.db.execute(
-            select(User).where(User.email == request.email)
-        )
-        if result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An account with this email address already exists",
-            )
-
-        user = User(
-            email=request.email,
-            hashed_password=hash_password(request.password),
-            full_name=request.full_name,
-            phone=request.phone,
-            role=UserRole.customer,
-            status=UserStatus.active,
-        )
-        self.db.add(user)
-        await self.db.flush()
-        await self.db.refresh(user)
-
-        token_data        = {"sub": str(user.id), "email": user.email, "role": user.role.value}
-        access_token      = create_access_token(token_data)
-        refresh_token_raw = create_refresh_token(token_data)
-
-        token_obj = RefreshToken(
-            user_id=user.id,
-            token_hash=_hash_token(refresh_token_raw),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
-        self.db.add(token_obj)
-        await self.db.commit()
-        await self.db.refresh(user)
-
-        await _emit_audit(
-            "register", str(user.id), str(user.id),
-            f"New customer account created: {user.email}",
-            ip_address, user_agent,
-        )
-        return TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token_raw,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=UserOut.model_validate(user),
-        )
-
-    async def change_password(
-        self,
-        user_id: str,
-        current_password: str,
-        new_password: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-    ) -> dict:
-        """Verify current password then update. Revokes all sessions on success."""
-        from sqlalchemy import delete as sa_delete
-
-        result = await self.db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-        if not verify_password(current_password, user.hashed_password):
-            await _emit_audit(
-                "password_change_failed", user_id, user_id,
-                "Password change attempt with wrong current password",
-                ip_address, user_agent,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Current password is incorrect",
-            )
-
-        user.hashed_password = hash_password(new_password)
-        # Revoke ALL refresh tokens for security
-        await self.db.execute(
-            sa_delete(RefreshToken).where(RefreshToken.user_id == user_id)
-        )
-        await self.db.commit()
-
-        await _emit_audit(
-            "password_changed", user_id, user_id,
-            "Password changed — all sessions revoked",
-            ip_address, user_agent,
-        )
-        return {"message": "Password changed successfully. Please log in again."}
 
     async def login(
         self,

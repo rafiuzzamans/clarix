@@ -294,3 +294,9 @@ class CaseService:
 
 
 
+
+# Add SLA breach detection logic
+
+# Improve pagination performance
+
+# Emit timeline event on status change

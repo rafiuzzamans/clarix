@@ -100,3 +100,5 @@ class TimelineOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Add ai_explanation to CaseOut schema

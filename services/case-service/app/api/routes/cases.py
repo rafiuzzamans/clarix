@@ -123,3 +123,5 @@ async def get_timeline(
     return await CaseService(db).get_timeline(case_id)
 
 
+
+# Add case search by keyword

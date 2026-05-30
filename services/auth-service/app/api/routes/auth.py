@@ -98,3 +98,7 @@ async def verify_mfa(
 ):
     service = AuthService(db)
     return await service.verify_mfa_setup(current_user.id, body.code)
+
+# Rate limit login attempts
+
+# Add logout endpoint

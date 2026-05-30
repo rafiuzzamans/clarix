@@ -39,3 +39,7 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+# Increase bcrypt rounds to 12
+
+# Add token blacklist check

@@ -54,3 +54,5 @@ class RefreshToken(Base):
     created_at  = Column(DateTime(timezone=True), server_default=text("now()"))
 
 
+
+# Add last_login_at update on token issue

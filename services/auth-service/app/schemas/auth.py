@@ -70,3 +70,5 @@ class MFAVerifyRequest(BaseModel):
 
 TokenResponse.model_rebuild()
 
+
+# Add token expiry to response

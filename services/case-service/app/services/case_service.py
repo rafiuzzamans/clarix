@@ -300,3 +300,5 @@ class CaseService:
 # Improve pagination performance
 
 # Emit timeline event on status change
+
+# Handle unassigned cases in manager view

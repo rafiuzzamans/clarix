@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-slate-950: #020617;
   --color-slate-900: #0f172a;
@@ -47,71 +49,103 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+  }
+
+  .dark body {
+    @apply bg-black text-slate-100;
+    background-image: radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { @apply bg-slate-900; }
-  ::-webkit-scrollbar-thumb { @apply bg-indigo-600 rounded-full; }
+  ::-webkit-scrollbar-track { @apply bg-slate-100; }
+  .dark ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full hover:bg-slate-400; }
+  .dark ::-webkit-scrollbar-thumb { @apply bg-white/20 rounded-full hover:bg-white/30; }
 }
 
 @layer components {
   .card {
-    background-color: #0f172a; /* slate-900 */
-    border: 1px solid #1e293b; /* slate-800 */
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    background-color: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+  .dark .card {
+    background-color: rgba(10, 10, 12, 0.6); 
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .card-hover {
-    background-color: #0f172a;
-    border: 1px solid #1e293b;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    transition: all 300ms;
+    background-color: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dark .card-hover {
+    background-color: rgba(15, 15, 20, 0.6);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   }
   .card-hover:hover {
-    border-color: rgb(99 102 241 / 0.5);
-    box-shadow: 0 20px 25px -5px rgb(99 102 241 / 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+  }
+  .dark .card-hover:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.1);
   }
 
   .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5
-           rounded-xl transition-all duration-200 flex items-center gap-2
+    @apply bg-white text-black font-semibold px-6 py-3
+           rounded-2xl transition-all duration-300 flex items-center justify-center gap-2
            disabled:opacity-50 disabled:cursor-not-allowed shadow-lg;
-    box-shadow: 0 10px 15px -3px rgb(99 102 241 / 0.2);
+    box-shadow: 0 10px 20px -5px rgba(255, 255, 255, 0.3);
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 15px 30px -5px rgba(255, 255, 255, 0.4);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .btn-secondary {
-    @apply bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-5 py-2.5
-           rounded-xl transition-all duration-200 border border-slate-700;
+    @apply bg-white/5 hover:bg-white/10 text-white font-medium px-6 py-3
+           rounded-2xl transition-all duration-300 border border-white/10;
   }
 
   .btn-danger {
-    background-color: rgb(220 38 38 / 0.2);
+    background-color: rgb(220 38 38 / 0.1);
     color: #f87171;
-    border: 1px solid rgb(239 68 68 / 0.3);
+    border: 1px solid rgb(239 68 68 / 0.2);
     font-weight: 500;
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.75rem;
-    transition: all 200ms;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    transition: all 300ms;
   }
   .btn-danger:hover {
-    background-color: rgb(220 38 38 / 0.3);
+    background-color: rgb(220 38 38 / 0.2);
+    border-color: rgb(239 68 68 / 0.4);
   }
 
   .input-field {
-    @apply w-full bg-slate-800 border border-slate-700 text-slate-100
-           rounded-xl px-4 py-2.5
-           focus:outline-none focus:ring-2 focus:border-indigo-500
-           transition-all duration-200;
-    --tw-ring-color: rgb(99 102 241 / 0.5);
+    @apply w-full bg-white/5 border border-white/10 text-white
+           rounded-2xl px-5 py-3.5
+           focus:outline-none focus:ring-0 focus:border-white/30 focus:bg-white/10
+           transition-all duration-300;
   }
   .input-field::placeholder {
-    @apply text-slate-500;
+    @apply text-white/40;
   }
 
   .badge {
@@ -143,11 +177,18 @@
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     border-radius: 0.75rem;
-    color: #94a3b8;
+    color: #475569;
     transition: all 200ms;
     cursor: pointer;
   }
+  .dark .sidebar-link {
+    color: #94a3b8;
+  }
   .sidebar-link:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+  }
+  .dark .sidebar-link:hover {
     color: white;
     background-color: #1e293b;
   }
@@ -158,9 +199,14 @@
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     border-radius: 0.75rem;
-    color: #a5b4fc;
+    color: #4f46e5;
     transition: all 200ms;
     cursor: pointer;
+    background-color: rgb(79 70 229 / 0.1);
+    border: 1px solid rgb(99 102 241 / 0.2);
+  }
+  .dark .sidebar-link-active {
+    color: #a5b4fc;
     background-color: rgb(79 70 229 / 0.2);
     border: 1px solid rgb(99 102 241 / 0.3);
   }

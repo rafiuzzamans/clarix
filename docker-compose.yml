@@ -167,7 +167,7 @@ services:
       - cs_network
     volumes:
       - ./services/ai-service:/app
-      - ./ml/models:/app/models:ro
+      - ./ml/models:/app/models
     restart: unless-stopped
 
   chatbot-service:

@@ -13,25 +13,29 @@ export const metadata: Metadata = {
     "AI-powered customer service intelligence platform with chatbot, workflow automation, and analytics.",
 };
 
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className={inter.className} suppressHydrationWarning>
-        <QueryProvider>
-          <AuthProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: "#1e1b4b",
-                  color: "#e0e7ff",
-                  border: "1px solid #4f46e5",
-                },
-              }}
-            />
-          </AuthProvider>
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#1e1b4b",
+                    color: "#e0e7ff",
+                    border: "1px solid #4f46e5",
+                  },
+                }}
+              />
+            </AuthProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

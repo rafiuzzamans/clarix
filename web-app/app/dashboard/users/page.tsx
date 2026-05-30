@@ -114,7 +114,9 @@ export default function UsersPage() {
                           </button>
                         )}
                         {u.mfa_enabled && (
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" title="MFA enabled" />
+                          <span title="MFA enabled">
+                            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                          </span>
                         )}
                       </div>
                     </td>

@@ -37,7 +37,7 @@ async def case_volume(days: int = 30, db: AsyncSession = Depends(get_db)):
             COUNT(*) FILTER (WHERE status IN ('resolved','closed')) AS resolved,
             COUNT(*) FILTER (WHERE is_escalated)                    AS escalated
         FROM cases
-        WHERE created_at >= NOW() - INTERVAL ':days days'
+        WHERE created_at >= NOW() - :days * INTERVAL '1 day'
         GROUP BY day
         ORDER BY day ASC
     """).bindparams(days=days))
@@ -53,7 +53,7 @@ async def sentiment_trend(days: int = 30, db: AsyncSession = Depends(get_db)):
             COUNT(*) FILTER (WHERE sentiment = 'neutral')        AS neutral,
             COUNT(*) FILTER (WHERE sentiment = 'negative')       AS negative
         FROM cases
-        WHERE created_at >= NOW() - INTERVAL ':days days'
+        WHERE created_at >= NOW() - :days * INTERVAL '1 day'
         GROUP BY day
         ORDER BY day ASC
     """).bindparams(days=days))

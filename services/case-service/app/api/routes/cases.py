@@ -15,6 +15,7 @@ router = APIRouter(prefix="/cases", tags=["Cases"])
 
 
 @router.post("", response_model=CaseOut, status_code=201, summary="Create a new case")
+@router.post("/", response_model=CaseOut, status_code=201, summary="Create a new case", include_in_schema=False)
 async def create_case(
     body: CaseCreate,
     current_user: User = Depends(get_current_user),
@@ -24,6 +25,7 @@ async def create_case(
 
 
 @router.get("", summary="List cases with filters")
+@router.get("/", summary="List cases with filters", include_in_schema=False)
 async def list_cases(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),

@@ -56,3 +56,5 @@ class RefreshToken(Base):
 
 
 # Add last_login_at update on token issue
+
+# Add MFA fields documentation

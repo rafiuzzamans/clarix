@@ -42,3 +42,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Document JWT config settings

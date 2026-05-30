@@ -38,3 +38,5 @@ async def health():
         "status": "healthy",
         "models_ready": registry.is_ready()
     }
+
+# Lazy-load models on first request

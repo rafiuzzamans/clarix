@@ -40,3 +40,5 @@ async def health():
     }
 
 # Lazy-load models on first request
+
+# Add model version endpoint

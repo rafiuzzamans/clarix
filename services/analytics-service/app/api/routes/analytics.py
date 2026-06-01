@@ -168,3 +168,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
     """), {"today": today})
     await db.commit()
     return {"status": "refreshed", "report_date": str(today)}
+
+# Add case volume by day query

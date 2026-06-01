@@ -174,3 +174,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Add avg resolution time metric
 
 # Add agent performance endpoint
+
+# Add SLA breach rate query

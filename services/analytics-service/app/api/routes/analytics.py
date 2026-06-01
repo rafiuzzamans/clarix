@@ -170,3 +170,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
     return {"status": "refreshed", "report_date": str(today)}
 
 # Add case volume by day query
+
+# Add avg resolution time metric

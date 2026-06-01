@@ -176,3 +176,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Add agent performance endpoint
 
 # Add SLA breach rate query
+
+# Add sentiment trend over time

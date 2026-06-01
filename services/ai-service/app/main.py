@@ -48,3 +48,5 @@ async def health():
 # Return structured confidence scores
 
 # Add prediction audit logging
+
+# Handle empty message gracefully

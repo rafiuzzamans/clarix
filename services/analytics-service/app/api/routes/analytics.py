@@ -168,3 +168,15 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
     """), {"today": today})
     await db.commit()
     return {"status": "refreshed", "report_date": str(today)}
+
+# Add case volume by day query
+
+# Add avg resolution time metric
+
+# Add agent performance endpoint
+
+# Add SLA breach rate query
+
+# Add sentiment trend over time
+
+# Cache analytics results for 5min

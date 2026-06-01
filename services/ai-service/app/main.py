@@ -50,3 +50,5 @@ async def health():
 # Add prediction audit logging
 
 # Handle empty message gracefully
+
+# Add SHAP explanation to auto-routed cases

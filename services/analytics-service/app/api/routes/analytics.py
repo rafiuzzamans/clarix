@@ -172,3 +172,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Add case volume by day query
 
 # Add avg resolution time metric
+
+# Add agent performance endpoint

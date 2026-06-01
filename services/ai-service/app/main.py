@@ -48,3 +48,7 @@ async def health():
 # Return structured confidence scores
 
 # Add prediction audit logging
+
+# Handle empty message gracefully
+
+# Add SHAP explanation to auto-routed cases

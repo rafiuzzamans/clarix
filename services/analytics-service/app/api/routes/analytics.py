@@ -178,3 +178,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Add SLA breach rate query
 
 # Add sentiment trend over time
+
+# Cache analytics results for 5min

@@ -38,3 +38,13 @@ async def health():
         "status": "healthy",
         "models_ready": registry.is_ready()
     }
+
+# Lazy-load models on first request
+
+# Add model version endpoint
+
+# Cache predictions for duplicate messages
+
+# Return structured confidence scores
+
+# Add prediction audit logging

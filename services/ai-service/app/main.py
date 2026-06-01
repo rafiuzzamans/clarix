@@ -44,3 +44,5 @@ async def health():
 # Add model version endpoint
 
 # Cache predictions for duplicate messages
+
+# Return structured confidence scores

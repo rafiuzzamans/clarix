@@ -41,3 +41,5 @@ async def health_check():
 # Add avatar upload support
 
 # Add team assignment endpoint
+
+# Add user status deactivation

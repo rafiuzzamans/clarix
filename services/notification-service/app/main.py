@@ -23,3 +23,5 @@ async def health():
     return {"service": "notification-service", "status": "healthy"}
 
 # Add email template system
+
+# Queue notifications asynchronously

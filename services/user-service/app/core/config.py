@@ -42,3 +42,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Document user service settings

@@ -42,3 +42,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Add analytics DB connection pool config

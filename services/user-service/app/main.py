@@ -35,3 +35,5 @@ app.include_router(users_router.router)
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"service": "user-service", "status": "healthy"}
+
+# Add user profile update endpoint

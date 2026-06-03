@@ -42,3 +42,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Add SMTP config

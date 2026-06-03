@@ -25,3 +25,5 @@ async def health():
 # Add email template system
 
 # Queue notifications asynchronously
+
+# Add case assigned notification

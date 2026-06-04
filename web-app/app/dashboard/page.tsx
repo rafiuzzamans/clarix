@@ -199,3 +199,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+# Add real-time case count badge

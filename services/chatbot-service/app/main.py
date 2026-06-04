@@ -40,3 +40,5 @@ async def health():
 # Add knowledge base lookup
 
 # Handle session timeout gracefully
+
+# Add CSAT survey after resolution

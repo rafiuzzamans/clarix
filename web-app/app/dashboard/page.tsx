@@ -203,3 +203,5 @@ export default function DashboardPage() {
 # Add real-time case count badge
 
 # Add trend indicator to KPIs
+
+# Fix chart color scheme for dark mode

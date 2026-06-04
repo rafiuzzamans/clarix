@@ -32,3 +32,13 @@ app.include_router(chatbot_router.router)
 @app.get("/health", tags=["Health"])
 async def health():
     return {"service": "chatbot-service", "status": "healthy"}
+
+# Add conversation history storage
+
+# Add intent classification step
+
+# Add knowledge base lookup
+
+# Handle session timeout gracefully
+
+# Add CSAT survey after resolution

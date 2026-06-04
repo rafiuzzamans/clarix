@@ -36,3 +36,5 @@ async def health():
 # Add conversation history storage
 
 # Add intent classification step
+
+# Add knowledge base lookup

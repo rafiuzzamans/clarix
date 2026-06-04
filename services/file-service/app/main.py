@@ -25,3 +25,5 @@ async def health():
 # Add virus scan hook
 
 # Enforce file size limit
+
+# Add file type allowlist

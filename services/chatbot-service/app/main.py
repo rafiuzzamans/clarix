@@ -34,3 +34,5 @@ async def health():
     return {"service": "chatbot-service", "status": "healthy"}
 
 # Add conversation history storage
+
+# Add intent classification step

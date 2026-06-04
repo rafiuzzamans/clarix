@@ -27,3 +27,5 @@ async def health():
 # Add pagination to audit log query
 
 # Add filter by actor_id
+
+# Add event type filter

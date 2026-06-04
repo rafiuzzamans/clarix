@@ -23,3 +23,5 @@ async def health():
     return {"service": "file-service", "status": "healthy"}
 
 # Add virus scan hook
+
+# Enforce file size limit

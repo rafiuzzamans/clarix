@@ -21,3 +21,11 @@ app.include_router(files_router.router)
 @app.get("/health")
 async def health():
     return {"service": "file-service", "status": "healthy"}
+
+# Add virus scan hook
+
+# Enforce file size limit
+
+# Add file type allowlist
+
+# Add presigned URL generation

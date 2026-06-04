@@ -21,3 +21,5 @@ async def health():
     return {"service": "audit-service", "status": "healthy"}
 
 # Add audit event schema
+
+# Store events in PostgreSQL

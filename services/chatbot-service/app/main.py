@@ -38,3 +38,5 @@ async def health():
 # Add intent classification step
 
 # Add knowledge base lookup
+
+# Handle session timeout gracefully

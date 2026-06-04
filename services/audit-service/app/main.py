@@ -19,3 +19,5 @@ app.include_router(audit_router.router)
 @app.get("/health")
 async def health():
     return {"service": "audit-service", "status": "healthy"}
+
+# Add audit event schema

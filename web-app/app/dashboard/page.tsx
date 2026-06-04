@@ -201,3 +201,5 @@ export default function DashboardPage() {
 }
 
 # Add real-time case count badge
+
+# Add trend indicator to KPIs

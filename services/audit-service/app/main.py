@@ -25,3 +25,5 @@ async def health():
 # Store events in PostgreSQL
 
 # Add pagination to audit log query
+
+# Add filter by actor_id

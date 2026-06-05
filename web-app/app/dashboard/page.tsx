@@ -199,3 +199,13 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+# Add real-time case count badge
+
+# Add trend indicator to KPIs
+
+# Fix chart color scheme for dark mode
+
+# Add loading skeleton for charts
+
+# Add date range picker for analytics

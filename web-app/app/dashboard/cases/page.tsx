@@ -148,3 +148,5 @@ export default function CasesPage() {
     </div>
   );
 }
+
+# Add bulk status update

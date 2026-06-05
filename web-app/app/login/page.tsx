@@ -173,3 +173,5 @@ export default function LoginPage() {
 }
 
 # Add show/hide password toggle
+
+# Add loading spinner on submit

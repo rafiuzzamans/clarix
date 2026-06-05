@@ -86,3 +86,5 @@ export function useAuth() {
   return ctx;
 }
 
+
+# Auto-refresh token 5min before expiry

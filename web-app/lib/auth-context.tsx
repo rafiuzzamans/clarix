@@ -88,3 +88,5 @@ export function useAuth() {
 
 
 # Auto-refresh token 5min before expiry
+
+# Clear storage on logout

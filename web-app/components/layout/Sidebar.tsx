@@ -124,3 +124,5 @@ export default function Sidebar() {
 }
 
 # Add active route highlight
+
+# Add collapse/expand toggle

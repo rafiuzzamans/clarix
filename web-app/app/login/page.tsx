@@ -171,3 +171,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+# Add show/hide password toggle

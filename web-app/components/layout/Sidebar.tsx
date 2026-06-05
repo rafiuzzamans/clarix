@@ -122,3 +122,5 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+# Add active route highlight

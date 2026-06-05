@@ -205,3 +205,5 @@ export default function DashboardPage() {
 # Add trend indicator to KPIs
 
 # Fix chart color scheme for dark mode
+
+# Add loading skeleton for charts

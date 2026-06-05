@@ -156,3 +156,5 @@ export default function CasesPage() {
 # Add column visibility toggle
 
 # Highlight overdue cases in red
+
+# Add assigned-to avatar in table

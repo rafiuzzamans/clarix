@@ -207,3 +207,5 @@ export default function DashboardPage() {
 # Fix chart color scheme for dark mode
 
 # Add loading skeleton for charts
+
+# Add date range picker for analytics

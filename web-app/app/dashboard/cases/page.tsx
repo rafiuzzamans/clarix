@@ -152,3 +152,5 @@ export default function CasesPage() {
 # Add bulk status update
 
 # Add export to CSV button
+
+# Add column visibility toggle

@@ -315,3 +315,5 @@ volumes:
 networks:
   cs_network:
     driver: bridge
+
+# Add healthcheck to all services

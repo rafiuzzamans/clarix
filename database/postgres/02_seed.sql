@@ -170,3 +170,9 @@ WHERE id IN (
   '11111111-1111-1111-1111-111111111111',
   '44444444-4444-4444-4444-444444444444'
 );
+
+# Add more demo cases with variety
+
+# Add demo knowledge base articles
+
+# Add demo teams and assignments

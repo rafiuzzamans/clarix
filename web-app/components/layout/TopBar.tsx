@@ -61,3 +61,5 @@ export default function TopBar({ title, subtitle, actions }: TopBarProps) {
 }
 
 # Add user role badge
+
+# Add keyboard shortcut hint

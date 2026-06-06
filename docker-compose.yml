@@ -317,3 +317,5 @@ networks:
     driver: bridge
 
 # Add healthcheck to all services
+
+# Set restart policy to unless-stopped

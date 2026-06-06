@@ -172,3 +172,5 @@ WHERE id IN (
 );
 
 # Add more demo cases with variety
+
+# Add demo knowledge base articles

@@ -122,3 +122,9 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+# Add active route highlight
+
+# Add collapse/expand toggle
+
+# Show unread notification badge

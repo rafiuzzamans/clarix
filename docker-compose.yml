@@ -319,3 +319,5 @@ networks:
 # Add healthcheck to all services
 
 # Set restart policy to unless-stopped
+
+# Add resource limits for memory

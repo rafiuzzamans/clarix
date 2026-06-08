@@ -306,3 +306,5 @@ class CaseService:
 # Add escalation audit trail
 
 # Sort cases by created_at desc by default
+
+# Return 404 when case not found

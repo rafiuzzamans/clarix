@@ -308,3 +308,5 @@ class CaseService:
 # Sort cases by created_at desc by default
 
 # Return 404 when case not found
+
+# Prevent closing already-closed cases

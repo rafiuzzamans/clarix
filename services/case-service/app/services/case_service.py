@@ -304,3 +304,5 @@ class CaseService:
 # Handle unassigned cases in manager view
 
 # Add escalation audit trail
+
+# Sort cases by created_at desc by default

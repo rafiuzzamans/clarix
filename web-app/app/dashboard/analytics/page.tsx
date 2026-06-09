@@ -9,3 +9,5 @@ export default function AnalyticsPage() { return null; }
 # Add resolution time histogram
 
 # Add sentiment trend line chart
+
+# Add agent leaderboard table

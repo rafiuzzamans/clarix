@@ -137,3 +137,5 @@ export default function UsersPage() {
 # Add invite user modal
 
 # Add user status toggle
+
+# Search users by name or email

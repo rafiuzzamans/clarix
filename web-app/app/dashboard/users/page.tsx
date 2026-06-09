@@ -139,3 +139,5 @@ export default function UsersPage() {
 # Add user status toggle
 
 # Search users by name or email
+
+# Add role filter dropdown

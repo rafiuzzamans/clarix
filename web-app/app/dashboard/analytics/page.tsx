@@ -7,3 +7,5 @@ export default function AnalyticsPage() { return null; }
 # Add category pie chart
 
 # Add resolution time histogram
+
+# Add sentiment trend line chart

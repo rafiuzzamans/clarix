@@ -102,3 +102,5 @@ async def verify_mfa(
 # Rate limit login attempts
 
 # Add logout endpoint
+
+# Return 401 on expired token

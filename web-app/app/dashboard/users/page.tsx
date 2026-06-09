@@ -133,3 +133,11 @@ export default function UsersPage() {
     </div>
   );
 }
+
+# Add invite user modal
+
+# Add user status toggle
+
+# Search users by name or email
+
+# Add role filter dropdown

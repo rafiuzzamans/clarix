@@ -43,3 +43,5 @@ def decode_token(token: str) -> Optional[dict]:
 # Increase bcrypt rounds to 12
 
 # Add token blacklist check
+
+# Add audience claim validation

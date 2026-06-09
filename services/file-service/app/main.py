@@ -29,3 +29,5 @@ async def health():
 # Add file type allowlist
 
 # Add presigned URL generation
+
+# Generate thumbnail for images

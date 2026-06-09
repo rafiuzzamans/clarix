@@ -45,3 +45,5 @@ async def health_check():
 # Add user status deactivation
 
 # Add pagination to user list
+
+# Add role filter to user list

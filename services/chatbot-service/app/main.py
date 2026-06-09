@@ -44,3 +44,5 @@ async def health():
 # Add CSAT survey after resolution
 
 # Add typing indicator event
+
+# Sanitize user input

@@ -42,3 +42,5 @@ async def health():
 # Handle session timeout gracefully
 
 # Add CSAT survey after resolution
+
+# Add typing indicator event

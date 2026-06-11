@@ -147,3 +147,5 @@ export const auditApi = {
 # Add knowledge base API client
 
 # Retry failed requests once
+
+# Add request timing logger in dev

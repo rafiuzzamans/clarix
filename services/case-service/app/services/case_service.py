@@ -310,3 +310,9 @@ class CaseService:
 # Return 404 when case not found
 
 # Prevent closing already-closed cases
+
+# Add reassignment timeline event
+
+# Compute SLA deadline on create
+
+# Validate agent role on assign

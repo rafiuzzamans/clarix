@@ -111,3 +111,5 @@ class CaseTimeline(Base):
 
 
 # Add composite index for status+priority
+
+# Add index on created_at

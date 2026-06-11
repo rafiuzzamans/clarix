@@ -129,3 +129,7 @@ async def get_timeline(
 # Add filter by assigned agent
 
 # Validate UUID format in path param
+
+# Add GET /cases/stats summary
+
+# Add case source filter

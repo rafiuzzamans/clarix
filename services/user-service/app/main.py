@@ -47,3 +47,5 @@ async def health_check():
 # Add pagination to user list
 
 # Add role filter to user list
+
+# Add bulk role update

@@ -141,3 +141,5 @@ export const auditApi = {
 };
 
 # Add analytics API client methods
+
+# Add users API client

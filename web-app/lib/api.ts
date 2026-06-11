@@ -149,3 +149,5 @@ export const auditApi = {
 # Retry failed requests once
 
 # Add request timing logger in dev
+
+# Add getTimeline to casesApi

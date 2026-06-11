@@ -139,3 +139,5 @@ export const auditApi = {
   byActor: (actorId: string) =>
     apiClient.get(`/api/audit/logs/actor/${actorId}`),
 };
+
+# Add analytics API client methods

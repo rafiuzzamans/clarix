@@ -45,3 +45,5 @@ def decode_token(token: str) -> Optional[dict]:
 # Add token blacklist check
 
 # Add audience claim validation
+
+# Log failed login attempts

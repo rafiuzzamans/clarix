@@ -52,3 +52,5 @@ async def health():
 # Handle empty message gracefully
 
 # Add SHAP explanation to auto-routed cases
+
+# Fallback to rule-based routing on error

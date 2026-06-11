@@ -182,3 +182,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Cache analytics results for 5min
 
 # Add CORS preflight handling
+
+# Add team performance query

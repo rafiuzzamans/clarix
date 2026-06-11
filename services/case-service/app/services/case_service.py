@@ -314,3 +314,5 @@ class CaseService:
 # Add reassignment timeline event
 
 # Compute SLA deadline on create
+
+# Validate agent role on assign

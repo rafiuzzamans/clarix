@@ -145,3 +145,5 @@ export const auditApi = {
 # Add users API client
 
 # Add knowledge base API client
+
+# Retry failed requests once

@@ -158,3 +158,5 @@ export default function CasesPage() {
 # Highlight overdue cases in red
 
 # Add assigned-to avatar in table
+
+# Add empty state illustration

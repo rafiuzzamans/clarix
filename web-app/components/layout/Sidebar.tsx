@@ -128,3 +128,5 @@ export default function Sidebar() {
 # Add collapse/expand toggle
 
 # Show unread notification badge
+
+# Add Settings link at bottom

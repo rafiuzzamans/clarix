@@ -321,3 +321,5 @@ networks:
 # Set restart policy to unless-stopped
 
 # Add resource limits for memory
+
+# Add depends_on for startup order

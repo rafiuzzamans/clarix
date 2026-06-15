@@ -33,3 +33,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Add AI_SERVICE_URL config

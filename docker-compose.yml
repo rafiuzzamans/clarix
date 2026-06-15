@@ -323,3 +323,5 @@ networks:
 # Add resource limits for memory
 
 # Add depends_on for startup order
+
+# Add environment variable for LOG_LEVEL

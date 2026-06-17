@@ -33,3 +33,5 @@ async def health():
 # Add escalation notification
 
 # Add in-app notification storage
+
+# Add /health endpoint

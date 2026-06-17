@@ -54,3 +54,5 @@ async def health():
 # Add SHAP explanation to auto-routed cases
 
 # Fallback to rule-based routing on error
+
+# Add /health liveness probe

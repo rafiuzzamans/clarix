@@ -48,3 +48,5 @@ async def health():
 # Sanitize user input
 
 # Add escalation trigger detection
+
+# Add /health endpoint

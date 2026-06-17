@@ -31,3 +31,5 @@ async def health():
 # Add presigned URL generation
 
 # Generate thumbnail for images
+
+# Add /health endpoint

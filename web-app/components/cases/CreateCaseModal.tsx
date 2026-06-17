@@ -9,3 +9,5 @@ export default function CreateCaseModal(props) { return null; }
 # Add priority select
 
 # Show AI prediction preview
+
+# Add source selector

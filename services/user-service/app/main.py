@@ -49,3 +49,5 @@ async def health_check():
 # Add role filter to user list
 
 # Add bulk role update
+
+# Add /health endpoint

@@ -21,3 +21,5 @@ app.include_router(analytics_router.router)
 @app.get("/health")
 async def health():
     return {"service": "analytics-service", "status": "healthy"}
+
+# Add /health endpoint

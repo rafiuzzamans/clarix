@@ -31,3 +31,5 @@ async def health():
 # Add event type filter
 
 # Add IP address to audit events
+
+# Add /health endpoint

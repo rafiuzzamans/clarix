@@ -21,3 +21,5 @@ async def startup_event():
 @app.get("/health")
 async def health():
     return {"service": "automation-service", "status": "healthy"}
+
+# Add /health endpoint

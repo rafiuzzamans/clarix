@@ -160,3 +160,5 @@ export default function CasesPage() {
 # Add assigned-to avatar in table
 
 # Add empty state illustration
+
+# Persist filter state in URL params

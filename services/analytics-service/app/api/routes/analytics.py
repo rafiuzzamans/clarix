@@ -184,3 +184,5 @@ async def refresh_daily_report(db: AsyncSession = Depends(get_db)):
 # Add CORS preflight handling
 
 # Add team performance query
+
+# Add first-response-time metric

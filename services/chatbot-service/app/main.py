@@ -50,3 +50,5 @@ async def health():
 # Add escalation trigger detection
 
 # Add /health endpoint
+
+# Add fallback to knowledge base

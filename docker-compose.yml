@@ -325,3 +325,5 @@ networks:
 # Add depends_on for startup order
 
 # Add environment variable for LOG_LEVEL
+
+# Add named volumes for persistence

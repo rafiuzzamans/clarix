@@ -316,3 +316,7 @@ class CaseService:
 # Compute SLA deadline on create
 
 # Validate agent role on assign
+
+# Add note count to case list
+
+# Add sentiment auto-update from AI

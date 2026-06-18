@@ -130,3 +130,5 @@ export default function Sidebar() {
 # Show unread notification badge
 
 # Add Settings link at bottom
+
+# Add keyboard navigation

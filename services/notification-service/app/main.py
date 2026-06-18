@@ -35,3 +35,5 @@ async def health():
 # Add in-app notification storage
 
 # Add /health endpoint
+
+# Add case resolved notification

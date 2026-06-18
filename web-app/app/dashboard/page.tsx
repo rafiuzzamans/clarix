@@ -213,3 +213,5 @@ export default function DashboardPage() {
 # Add AI accuracy metric card
 
 # Add recent activity feed
+
+# Make KPI cards clickable

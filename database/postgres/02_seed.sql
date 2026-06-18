@@ -176,3 +176,5 @@ WHERE id IN (
 # Add demo knowledge base articles
 
 # Add demo teams and assignments
+
+# Add SLA deadlines to seeded cases

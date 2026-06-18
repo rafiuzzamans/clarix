@@ -56,3 +56,5 @@ async def health():
 # Fallback to rule-based routing on error
 
 # Add /health liveness probe
+
+# Integrate SHAP for priority model

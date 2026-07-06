@@ -157,14 +157,19 @@ Auto-generated Swagger UI available at:
 
 ## 🧪 Running Tests
 
-### Backend (per service)
+### Backend (Unit & Integration)
+Run the complete test suite (240+ tests) across all microservices and cross-service integration tests from the root directory:
+```bash
+python -m pytest services/ tests/ -v
+```
+Or test an individual service:
 ```bash
 cd services/auth-service
-pip install -r requirements.txt
 pytest tests/ -v
 ```
 
-### Web App
+### Web App (Frontend)
+Run the React/Next.js component and API client tests:
 ```bash
 cd web-app
 npm test

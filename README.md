@@ -9,7 +9,7 @@
 ## 🏗️ Architecture
 
 ```
-Client Layer        → Next.js Web App | React Native Mobile | Power BI Desktop
+Client Layer        → Next.js Web App | React Native Mobile
 Gateway Layer       → Nginx (routing, rate limiting, CORS)
 Microservices (×10) → Auth | Users | Cases | AI | Chatbot | Automation | Notifications | Analytics | Files | Audit
 Data Layer          → PostgreSQL + MongoDB + Local File Storage
@@ -131,12 +131,6 @@ Available dashboards:
 - Category distribution
 - Agent performance table
 - SLA compliance rate
-
-Connect **Power BI Desktop** to PostgreSQL:
-- Host: `localhost:5432`
-- Database: `csplatform`
-- User: `csadmin` / Password: `cspassword123`
-- Key tables: `cases`, `reporting_daily`, `reporting_agent_performance`
 
 ---
 

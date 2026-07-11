@@ -9,7 +9,9 @@ class PredictRequest(BaseModel):
 
 class FeatureScore(BaseModel):
     feature: str
-    score: float
+    score: Optional[float] = None
+    shap_value: Optional[float] = None
+    direction: Optional[str] = None
 
 
 class ClassResult(BaseModel):

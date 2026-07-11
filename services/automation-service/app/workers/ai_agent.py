@@ -49,9 +49,25 @@ async def auto_resolve_cases():
                     )
                     
                     await conn.execute(
-                        "INSERT INTO case_timeline (case_id, actor_id, event_type, description, new_value, created_at) VALUES ($1, $2, 'status_change', 'auto-resolved by Agent', 'resolved', $3)",
+                        "INSERT INTO case_timeline (case_id, actor_id, event_type, description, new_value, created_at) VALUES ($1, $2, 'status_change', 'Case was resolved by AI agent', 'resolved', $3)",
                         case_id, AI_AGENT_ID, now
                     )
+                    
+                    try:
+                        AUDIT_SERVICE_URL = os.getenv("AUDIT_SERVICE_URL", "http://audit-service:8010")
+                        await client.post(
+                            f"{AUDIT_SERVICE_URL}/audit/logs",
+                            json={
+                                "actor_id": AI_AGENT_ID,
+                                "action": "case_resolved_by_ai",
+                                "resource_type": "case",
+                                "resource_id": case_id,
+                                "description": "Case was resolved by AI agent",
+                                "metadata": {},
+                            },
+                        )
+                    except Exception as e:
+                        print(f"[AGENT] Failed to push audit log: {e}")
                     
                     print(f"[AGENT] Successfully auto-resolved case {case_id}")
             

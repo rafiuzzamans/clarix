@@ -55,7 +55,13 @@ async def logout(
 
 
 @router.get("/me", summary="Get current authenticated user")
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    team_name = None
+    if current_user.team_id:
+        from sqlalchemy import text
+        result = await db.execute(text("SELECT name FROM teams WHERE id = :id"), {"id": current_user.team_id})
+        team_name = result.scalar()
+
     return {
         "id": str(current_user.id),
         "email": current_user.email,
@@ -65,6 +71,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "mfa_enabled": current_user.mfa_enabled,
         "department": current_user.department,
         "team_id": str(current_user.team_id) if current_user.team_id else None,
+        "team_name": team_name,
     }
 
 

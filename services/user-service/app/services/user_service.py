@@ -3,21 +3,41 @@ from typing import Optional
 
 
 from fastapi import HTTPException, status
+import httpx
 from passlib.context import CryptContext
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.user import UserCreate, UserOut, UserUpdate
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+async def _emit_audit(action: str, actor_id: Optional[str], resource_id: Optional[str],
+                      description: str, metadata: Optional[dict] = None):
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post(
+                f"{settings.AUDIT_SERVICE_URL}/audit/logs",
+                json={
+                    "actor_id": actor_id,
+                    "action": action,
+                    "resource_type": "user",
+                    "resource_id": resource_id,
+                    "description": description,
+                    "metadata": metadata or {},
+                },
+            )
+    except Exception:
+        pass
 
 
 class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_user(self, data: UserCreate) -> UserOut:
+    async def create_user(self, data: UserCreate, actor_id: Optional[str] = None) -> UserOut:
         # Check uniqueness
         existing = await self.db.execute(select(User).where(User.email == data.email))
         if existing.scalar_one_or_none():
@@ -35,10 +55,19 @@ class UserService:
         self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
+        
+        await _emit_audit(
+            action="user_created",
+            actor_id=actor_id,
+            resource_id=str(user.id),
+            description=f"User {user.email} was created with role {user.role.value}",
+        )
+        
         return UserOut.model_validate(user)
 
     async def get_user(self, user_id: str) -> UserOut:
-        result = await self.db.execute(select(User).where(User.id == user_id))
+        import uuid
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -55,12 +84,13 @@ class UserService:
         query = select(User)
         count_query = select(func.count()).select_from(User)
 
+        from sqlalchemy import cast, String
         if role:
-            query = query.where(User.role == role)
-            count_query = count_query.where(User.role == role)
+            query = query.where(cast(User.role, String) == role.value)
+            count_query = count_query.where(cast(User.role, String) == role.value)
         if status:
-            query = query.where(User.status == status)
-            count_query = count_query.where(User.status == status)
+            query = query.where(cast(User.status, String) == status.value)
+            count_query = count_query.where(cast(User.status, String) == status.value)
         if search:
             like = f"%{search}%"
             query = query.where(
@@ -83,8 +113,9 @@ class UserService:
             "total_pages": math.ceil(total / page_size),
         }
 
-    async def update_user(self, user_id: str, data: UserUpdate) -> UserOut:
-        result = await self.db.execute(select(User).where(User.id == user_id))
+    async def update_user(self, user_id: str, data: UserUpdate, actor_id: Optional[str] = None) -> UserOut:
+        import uuid
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -95,30 +126,61 @@ class UserService:
 
         await self.db.commit()
         await self.db.refresh(user)
+        
+        await _emit_audit(
+            action="user_updated",
+            actor_id=actor_id,
+            resource_id=user_id,
+            description=f"User {user.email} profile was updated",
+            metadata={"updated_fields": list(update_data.keys())}
+        )
+        
         return UserOut.model_validate(user)
 
-    async def update_role(self, user_id: str, role: UserRole) -> UserOut:
-        result = await self.db.execute(select(User).where(User.id == user_id))
+    async def update_role(self, user_id: str, role: UserRole, actor_id: Optional[str] = None) -> UserOut:
+        import uuid
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        
+        old_role = user.role
         user.role = role
         await self.db.commit()
         await self.db.refresh(user)
+        
+        await _emit_audit(
+            action="user_role_changed",
+            actor_id=actor_id,
+            resource_id=user_id,
+            description=f"User {user.email} role changed from {old_role.value} to {role.value}",
+        )
+        
         return UserOut.model_validate(user)
 
-    async def update_status(self, user_id: str, new_status: UserStatus) -> UserOut:
-        result = await self.db.execute(select(User).where(User.id == user_id))
+    async def update_status(self, user_id: str, new_status: UserStatus, actor_id: Optional[str] = None) -> UserOut:
+        import uuid
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        
+        old_status = user.status
         user.status = new_status
         await self.db.commit()
         await self.db.refresh(user)
+        
+        await _emit_audit(
+            action="user_status_changed",
+            actor_id=actor_id,
+            resource_id=user_id,
+            description=f"User {user.email} status changed from {old_status.value} to {new_status.value}",
+        )
+        
         return UserOut.model_validate(user)
 
-    async def deactivate_user(self, user_id: str) -> dict:
-        await self.update_status(user_id, UserStatus.inactive)
+    async def deactivate_user(self, user_id: str, actor_id: Optional[str] = None) -> dict:
+        await self.update_status(user_id, UserStatus.inactive, actor_id)
         return {"message": "User deactivated successfully"}
 
 

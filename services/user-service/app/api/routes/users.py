@@ -17,9 +17,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 async def create_user(
     body: UserCreate,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    return await UserService(db).create_user(body)
+    return await UserService(db).create_user(body, str(current_user.id))
 
 
 @router.get("", summary="List users with filters and pagination")
@@ -49,9 +49,9 @@ async def update_user(
     user_id: str,
     body: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    return await UserService(db).update_user(user_id, body)
+    return await UserService(db).update_user(user_id, body, str(current_user.id))
 
 
 @router.patch("/{user_id}/role", response_model=UserOut, summary="Update user role")
@@ -59,9 +59,9 @@ async def update_role(
     user_id: str,
     body: UserRoleUpdate,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    return await UserService(db).update_role(user_id, UserRole(body.role.value))
+    return await UserService(db).update_role(user_id, UserRole(body.role.value), str(current_user.id))
 
 
 @router.patch("/{user_id}/status", response_model=UserOut, summary="Update user status")
@@ -69,17 +69,17 @@ async def update_status(
     user_id: str,
     body: UserStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    return await UserService(db).update_status(user_id, UserStatus(body.status.value))
+    return await UserService(db).update_status(user_id, UserStatus(body.status.value), str(current_user.id))
 
 
 @router.delete("/{user_id}", summary="Deactivate a user")
 async def deactivate_user(
     user_id: str,
     db: AsyncSession = Depends(get_db),
-    _=Depends(require_admin),
+    current_user=Depends(require_admin),
 ):
-    return await UserService(db).deactivate_user(user_id)
+    return await UserService(db).deactivate_user(user_id, str(current_user.id))
 
 

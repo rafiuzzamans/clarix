@@ -140,16 +140,9 @@ export const auditApi = {
     apiClient.get(`/api/audit/logs/actor/${actorId}`),
 };
 
-# Add analytics API client methods
 
-# Add users API client
 
-# Add knowledge base API client
 
-# Retry failed requests once
 
-# Add request timing logger in dev
 
-# Add getTimeline to casesApi
 
-# Add abort controller for page unmount

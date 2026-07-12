@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 from enum import Enum
 
@@ -57,7 +58,7 @@ class UserStatusUpdate(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: str
+    id: UUID
     email: str
     full_name: str
     role: UserRole
@@ -65,7 +66,7 @@ class UserOut(BaseModel):
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
-    team_id: Optional[str] = None
+    team_id: Optional[UUID] = None
     mfa_enabled: bool
     last_login_at: Optional[datetime] = None
     created_at: datetime

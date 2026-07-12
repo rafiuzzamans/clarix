@@ -33,7 +33,7 @@ async def _emit_audit(action: str, actor_id: Optional[str], resource_id: Optiona
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             await client.post(
-                f"{settings.AUDIT_SERVICE_URL}/logs",
+                f"{settings.AUDIT_SERVICE_URL}/audit/logs",
                 json={
                     "actor_id": actor_id,
                     "action": action,

@@ -15,6 +15,7 @@ interface User {
   mfa_enabled: boolean;
   department?: string;
   team_id?: string;
+  team_name?: string;
 }
 
 interface AuthContextType {
@@ -87,6 +88,4 @@ export function useAuth() {
 }
 
 
-# Auto-refresh token 5min before expiry
 
-# Clear storage on logout

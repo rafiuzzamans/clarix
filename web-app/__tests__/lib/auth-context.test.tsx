@@ -4,13 +4,17 @@ import { jest } from "@jest/globals";
 import React from "react";
 
 // Mock the API interactions for login/logout
-jest.mock("@/lib/api", () => ({
-  login: jest.fn(),
-  logout: jest.fn(),
-  getCurrentUser: jest.fn(),
-}));
+jest.mock("@/lib/api", () => {
+  return {
+    authApi: {
+      login: jest.fn(),
+      logout: jest.fn(),
+      me: jest.fn(),
+    }
+  };
+});
 
-import { login, logout, getCurrentUser } from "@/lib/api";
+import { authApi } from "@/lib/api";
 
 describe("AuthContext", () => {
   beforeEach(() => {
@@ -18,7 +22,7 @@ describe("AuthContext", () => {
   });
 
   it("provides null user initially when no token", () => {
-    (getCurrentUser as jest.Mock).mockRejectedValueOnce(new Error("No token"));
+    (authApi.me as jest.Mock).mockRejectedValueOnce(new Error("No token"));
     const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -28,9 +32,14 @@ describe("AuthContext", () => {
 
   it("logs in successfully", async () => {
     const mockUser = { id: "user-1", email: "test@example.com", role: "agent" };
-    (login as jest.Mock).mockResolvedValueOnce({
-      access_token: "test-token",
-      user: mockUser,
+    (authApi.login as jest.Mock).mockResolvedValueOnce({
+      data: {
+        access_token: "test-token",
+        user: mockUser,
+      }
+    });
+    (authApi.me as jest.Mock).mockResolvedValueOnce({
+      data: mockUser
     });
 
     const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>;
@@ -45,7 +54,7 @@ describe("AuthContext", () => {
   });
 
   it("logs out successfully", async () => {
-    (logout as jest.Mock).mockResolvedValueOnce(undefined);
+    (authApi.logout as jest.Mock).mockResolvedValueOnce({ data: {} });
     
     const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });

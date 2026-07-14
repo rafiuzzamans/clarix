@@ -78,15 +78,15 @@ export default function CasesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800">
+                <tr className="border-b border-slate-200 dark:border-slate-800">
                   {["#", "Title", "Category", "Priority", "Status", "Sentiment", "Created", "Assigned"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
                 {isLoading && (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-500">Loading...</td>
@@ -98,26 +98,26 @@ export default function CasesPage() {
                   </tr>
                 )}
                 {cases.map((c: any) => (
-                  <tr key={c.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-3 text-slate-400 font-mono text-xs">#{c.case_number}</td>
+                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">#{c.case_number}</td>
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/cases/${c.id}`}
-                            className="text-white hover:text-indigo-300 font-medium transition-colors line-clamp-1">
+                            className="text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 font-medium transition-colors line-clamp-1">
                         {c.title}
                       </Link>
                       <p className="text-xs text-slate-500 mt-0.5">{c.source}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-400 capitalize text-xs">{c.category?.replace("_"," ") || "—"}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 capitalize text-xs">{c.category?.replace("_"," ") || "—"}</td>
                     <td className="px-4 py-3"><span className={`badge-${c.priority}`}>{c.priority}</span></td>
                     <td className="px-4 py-3"><span className={`badge-${c.status}`}>{c.status?.replace("_"," ")}</span></td>
                     <td className="px-4 py-3">
-                      {c.sentiment ? <span className={`badge-${c.sentiment}`}>{c.sentiment}</span> : <span className="text-slate-600">—</span>}
+                      {c.sentiment ? <span className={`badge-${c.sentiment}`}>{c.sentiment}</span> : <span className="text-slate-400 dark:text-slate-600">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
                       {format(new Date(c.created_at), "MMM d, HH:mm")}
                     </td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">
-                      {c.assigned_to ? "Assigned" : <span className="text-orange-400">Unassigned</span>}
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
+                      {c.assigned_to ? "Assigned" : <span className="text-orange-500 dark:text-orange-400">Unassigned</span>}
                     </td>
                   </tr>
                 ))}
@@ -126,7 +126,7 @@ export default function CasesPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-800">
             <span className="text-xs text-slate-500">
               Page {page} of {totalPages} · {data?.total ?? 0} records
             </span>
@@ -149,16 +149,9 @@ export default function CasesPage() {
   );
 }
 
-# Add bulk status update
 
-# Add export to CSV button
 
-# Add column visibility toggle
 
-# Highlight overdue cases in red
 
-# Add assigned-to avatar in table
 
-# Add empty state illustration
 
-# Persist filter state in URL params

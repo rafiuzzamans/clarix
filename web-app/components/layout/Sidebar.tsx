@@ -78,7 +78,9 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.full_name}</p>
-              <p className="text-xs text-indigo-600 dark:text-blue-500 font-medium capitalize mt-0.5">{user?.role}</p>
+              <p className="text-xs text-indigo-600 dark:text-blue-500 font-medium capitalize mt-0.5">
+                {user?.team_name ? `${user.team_name} · ${user.role}` : user?.role}
+              </p>
             </div>
           </div>
         </div>
@@ -123,12 +125,7 @@ export default function Sidebar() {
   );
 }
 
-# Add active route highlight
 
-# Add collapse/expand toggle
 
-# Show unread notification badge
 
-# Add Settings link at bottom
 
-# Add keyboard navigation

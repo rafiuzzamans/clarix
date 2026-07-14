@@ -39,12 +39,17 @@ async def list_cases(
 ):
     # Customers only see their own cases
     customer_id = None
+    team_id = None
     if current_user.role.value == "customer":
         customer_id = current_user.id
+    elif current_user.role.value in ("agent", "supervisor"):
+        if current_user.team_id:
+            team_id = current_user.team_id
 
     return await CaseService(db).list_cases(
         page=page, page_size=page_size, status=status, priority=priority,
-        category=category, customer_id=customer_id, assigned_to=assigned_to, search=search
+        category=category, customer_id=customer_id, assigned_to=assigned_to,
+        team_id=team_id, search=search
     )
 
 

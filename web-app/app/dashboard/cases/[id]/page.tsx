@@ -85,16 +85,16 @@ export default function CaseDetailPage() {
 
           {/* Case content */}
           <div className="card">
-            <h3 className="text-base font-semibold text-white mb-3">Description</h3>
-            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{c?.message}</p>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">Description</h3>
+            <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{c?.message}</p>
           </div>
 
           {/* AI Predictions */}
           {(c?.ai_category || c?.ai_priority || c?.ai_sentiment) && (
-            <div className="card border-indigo-500/30 bg-indigo-950/20">
+            <div className="card border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/20">
               <div className="flex items-center gap-2 mb-3">
-                <Bot className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-semibold text-indigo-300">AI Analysis</h3>
+                <Bot className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="text-base font-semibold text-indigo-800 dark:text-indigo-300">AI Analysis</h3>
                 <span className="text-xs text-slate-500">Confidence: {Math.round((c.ai_confidence || 0) * 100)}%</span>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -103,9 +103,9 @@ export default function CaseDetailPage() {
                   { label: "Priority",  value: c.ai_priority },
                   { label: "Sentiment", value: c.ai_sentiment },
                 ].map(({ label, value }) => (
-                  <div key={label} className="bg-indigo-900/20 rounded-xl p-3 border border-indigo-800/30">
+                  <div key={label} className="bg-white/60 dark:bg-indigo-900/20 rounded-xl p-3 border border-indigo-200 dark:border-indigo-800/30">
                     <p className="text-xs text-slate-500 mb-1">{label}</p>
-                    <p className="text-sm font-semibold text-white capitalize">{value || "—"}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white capitalize">{value || "—"}</p>
                   </div>
                 ))}
               </div>
@@ -114,8 +114,8 @@ export default function CaseDetailPage() {
 
           {/* Notes */}
           <div className="card">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-slate-400" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               Notes ({notes.length})
             </h3>
 
@@ -123,8 +123,8 @@ export default function CaseDetailPage() {
               {notes.map((n: any) => (
                 <div key={n.id} className={`p-3 rounded-xl text-sm ${
                   n.is_internal
-                    ? "bg-yellow-950/30 border border-yellow-800/30"
-                    : "bg-slate-800/50 border border-slate-700/50"
+                    ? "bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800/30"
+                    : "bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50"
                 }`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-slate-500">
@@ -137,7 +137,7 @@ export default function CaseDetailPage() {
                       {format(new Date(n.created_at), "MMM d, HH:mm")}
                     </span>
                   </div>
-                  <p className="text-slate-300 whitespace-pre-wrap">{n.content}</p>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{n.content}</p>
                 </div>
               ))}
               {notes.length === 0 && (
@@ -185,16 +185,16 @@ export default function CaseDetailPage() {
 
           {/* Timeline */}
           <div className="card">
-            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-400" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               Timeline
             </h3>
-            <div className="space-y-3 relative before:absolute before:left-3.5 before:top-0 before:bottom-0 before:border-l before:border-slate-700">
+            <div className="space-y-3 relative before:absolute before:left-3.5 before:top-0 before:bottom-0 before:border-l before:border-slate-200 dark:before:border-slate-700">
               {timeline.map((t: any) => (
                 <div key={t.id} className="flex gap-3 pl-8 relative">
                   <div className="absolute left-2.5 top-1.5 w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-300">{t.description}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">{t.description}</p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {format(new Date(t.created_at), "MMM d, yyyy HH:mm")}
                     </p>
@@ -212,24 +212,24 @@ export default function CaseDetailPage() {
         <div className="space-y-4">
           {/* Status & Actions */}
           <div className="card">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Case Details</h3>
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Case Details</h3>
             <div className="space-y-3 text-sm">
               {[
                 { label: "Status",   value: <span className={`badge-${c?.status}`}>{c?.status?.replace("_"," ")}</span> },
                 { label: "Priority", value: <span className={`badge-${c?.priority}`}>{c?.priority}</span> },
                 { label: "Sentiment",value: c?.sentiment ? <span className={`badge-${c?.sentiment}`}>{c?.sentiment}</span> : "—" },
-                { label: "Source",   value: <span className="capitalize text-slate-300">{c?.source}</span> },
-                { label: "Category", value: <span className="text-slate-300 capitalize">{c?.category?.replace("_"," ") || "—"}</span> },
+                { label: "Source",   value: <span className="capitalize text-slate-900 dark:text-slate-300">{c?.source}</span> },
+                { label: "Category", value: <span className="text-slate-900 dark:text-slate-300 capitalize">{c?.category?.replace("_"," ") || "—"}</span> },
                 { label: "SLA",      value: c?.sla_deadline ? (
                   <span className={new Date(c.sla_deadline) < new Date() ? "text-red-400" : "text-emerald-400"}>
                     {format(new Date(c.sla_deadline), "MMM d, HH:mm")}
                   </span>
                 ) : "—" },
-                { label: "Created",  value: <span className="text-slate-400">{c?.created_at ? format(new Date(c.created_at), "MMM d, HH:mm"): "—"}</span> },
+                { label: "Created",  value: <span className="text-slate-500 dark:text-slate-400">{c?.created_at ? format(new Date(c.created_at), "MMM d, HH:mm"): "—"}</span> },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between gap-2">
                   <span className="text-slate-500">{label}</span>
-                  <span>{value}</span>
+                  <span className="text-slate-900 dark:text-slate-300">{value}</span>
                 </div>
               ))}
             </div>
@@ -238,7 +238,7 @@ export default function CaseDetailPage() {
           {/* Actions */}
           {canEdit && (
             <div className="card space-y-2">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Actions</h3>
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Actions</h3>
 
               {c?.status !== "resolved" && (
                 <button

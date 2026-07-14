@@ -1,13 +1,8 @@
 'use client';
 // Create case modal
-export default function CreateCaseModal(props) { return null; }
+export default function CreateCaseModal(props: any) { return null; }
 
-# Add form validation
 
-# Add category select
 
-# Add priority select
 
-# Show AI prediction preview
 
-# Add source selector

@@ -5,7 +5,7 @@ from typing import Optional
 
 import httpx
 from fastapi import HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import func, select, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -57,6 +57,25 @@ async def _add_timeline(db: AsyncSession, case_id, actor_id, event_type, descrip
     db.add(entry)
 
 
+async def _emit_audit(action: str, actor_id: Optional[str], resource_id: Optional[str],
+                      description: str, metadata: Optional[dict] = None):
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            await client.post(
+                f"{settings.AUDIT_SERVICE_URL}/audit/logs",
+                json={
+                    "actor_id": actor_id,
+                    "action": action,
+                    "resource_type": "case",
+                    "resource_id": resource_id,
+                    "description": description,
+                    "metadata": metadata or {},
+                },
+            )
+    except Exception:
+        pass
+
+
 class CaseService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -71,9 +90,9 @@ class CaseService:
         ai_conf = None
 
         if ai_data:
-            ai_cat = ai_data.get("category")
-            ai_priority = ai_data.get("priority")
-            ai_sent = ai_data.get("sentiment")
+            ai_cat = ai_data.get("label_category")
+            ai_priority = ai_data.get("label_priority")
+            ai_sent = ai_data.get("label_sentiment")
             ai_conf = ai_data.get("confidence")
             if not priority and ai_priority:
                 try:
@@ -88,7 +107,7 @@ class CaseService:
             title=data.title,
             message=data.message,
             source=data.source,
-            category=data.category or (ai_cat and __builtins__),
+            category=data.category,
             priority=priority,
             customer_id=customer_id,
             sla_deadline=sla_deadline,
@@ -104,6 +123,7 @@ class CaseService:
                 from app.models.case import CaseCategory
                 case.category = CaseCategory(ai_cat)
             except (ValueError, TypeError):
+                # Fallback if AI category doesn't strictly match Enum
                 pass
 
         if ai_sent:
@@ -114,13 +134,19 @@ class CaseService:
                 pass
                 
         # AI Routing Logic
-        if ai_cat:
-            # Route to AI Agent by default for Agentic resolution
+        # Route to human teams by default, but let AI Agent intercept high confidence issues
+        if ai_conf and ai_conf > 0.85:
+            # High confidence -> Route to AI Agent for auto-resolution
             case.assigned_to = "99999999-9999-9999-9999-999999999999"
             case.team_id = "88888888-8888-8888-8888-888888888888"
-            
-            # If we wanted to route to specific human teams based on category:
-            # if ai_cat == "billing": case.team_id = "77777777-..."
+        else:
+            # Route to human teams based on category
+            if ai_cat in ("billing", "returns", "debt_collection", "credit_card"):
+                case.team_id = "33333333-3333-3333-3333-333333333333" # Billing Team
+            elif ai_cat in ("technical_support", "mortgage", "bank_account"):
+                case.team_id = "22222222-2222-2222-2222-222222222222" # Tier 2 Support
+            else:
+                case.team_id = "11111111-1111-1111-1111-111111111111" # Tier 1 Support
 
 
         self.db.add(case)
@@ -136,6 +162,14 @@ class CaseService:
         await self.db.commit()
         await self.db.refresh(case)
 
+        await _emit_audit(
+            action="case_created",
+            actor_id=actor_id,
+            resource_id=str(case.id),
+            description=f"Case #{case.case_number} was created",
+            metadata={"priority": priority.value, "category": case.category.value if case.category else None}
+        )
+
         # Trigger automation
         await _notify_automation("case_created", str(case.id), {
             "priority": priority.value,
@@ -145,7 +179,6 @@ class CaseService:
             await _notify_automation("case_urgent", str(case.id), {"priority": priority.value})
 
         return CaseOut.model_validate(case)
-
     async def get_case(self, case_id: str) -> CaseOut:
         result = await self.db.execute(select(Case).where(Case.id == case_id))
         case = result.scalar_one_or_none()
@@ -156,17 +189,18 @@ class CaseService:
     async def list_cases(
         self, page=1, page_size=20,
         status=None, priority=None, category=None,
-        customer_id=None, assigned_to=None, search=None
+        customer_id=None, assigned_to=None, team_id=None, search=None
     ):
         query = select(Case)
         count_q = select(func.count()).select_from(Case)
 
         filters = []
-        if status:     filters.append(Case.status == status)
-        if priority:   filters.append(Case.priority == priority)
-        if category:   filters.append(Case.category == category)
+        if status:     filters.append(cast(Case.status, String) == status.value)
+        if priority:   filters.append(cast(Case.priority, String) == priority.value)
+        if category:   filters.append(cast(Case.category, String) == category.value)
         if customer_id: filters.append(Case.customer_id == customer_id)
         if assigned_to: filters.append(Case.assigned_to == assigned_to)
+        if team_id: filters.append(Case.team_id == team_id)
         if search:
             like = f"%{search}%"
             filters.append((Case.title.ilike(like)) | (Case.message.ilike(like)))
@@ -211,6 +245,15 @@ class CaseService:
 
         await self.db.commit()
         await self.db.refresh(case)
+        
+        await _emit_audit(
+            action="case_updated",
+            actor_id=actor_id,
+            resource_id=case_id,
+            description=f"Case #{case.case_number} was updated",
+            metadata={"updated_fields": list(update_data.keys())}
+        )
+        
         return CaseOut.model_validate(case)
 
     async def assign_case(self, case_id: str, data: CaseAssign, actor_id: str) -> CaseOut:
@@ -233,6 +276,14 @@ class CaseService:
         )
         await self.db.commit()
         await self.db.refresh(case)
+        
+        await _emit_audit(
+            action="case_assigned",
+            actor_id=actor_id,
+            resource_id=case_id,
+            description=f"Case #{case.case_number} was assigned to agent {data.agent_id}",
+        )
+        
         return CaseOut.model_validate(case)
 
     async def escalate_case(self, case_id: str, data: CaseEscalate, actor_id: str) -> CaseOut:
@@ -254,10 +305,20 @@ class CaseService:
         await self.db.commit()
         await self.db.refresh(case)
 
-        await _notify_automation("case_urgent", str(case_id), {
+        # Trigger automation
+        await _notify_automation("case_escalated", str(case.id), {
             "reason": data.reason,
             "customer_id": str(case.customer_id)
         })
+
+        await _emit_audit(
+            action="case_escalated",
+            actor_id=actor_id,
+            resource_id=case_id,
+            description=f"Case #{case.case_number} was escalated",
+            metadata={"reason": data.reason}
+        )
+
         return CaseOut.model_validate(case)
 
     async def add_note(self, case_id: str, data: NoteCreate, author_id: str) -> NoteOut:

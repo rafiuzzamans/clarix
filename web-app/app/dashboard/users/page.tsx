@@ -7,6 +7,7 @@ import TopBar from "@/components/layout/TopBar";
 import { Plus, Search, RefreshCw, ShieldCheck, UserX, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import CreateUserModal from "../../../components/users/CreateUserModal";
 
 const ROLES = ["","customer","agent","supervisor","manager","admin"];
 const STATUSES = ["","active","inactive","suspended"];
@@ -17,6 +18,7 @@ export default function UsersPage() {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["users", page, search, role, status],
@@ -30,16 +32,27 @@ export default function UsersPage() {
   const deactivate = useMutation({
     mutationFn: (id: string) => usersApi.deactivate(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("User deactivated"); },
+    onError: (error: any) => toast.error(error.response?.data?.detail || "Failed to deactivate user"),
   });
 
   const activate = useMutation({
     mutationFn: (id: string) => usersApi.updateStatus(id, "active"),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("User activated"); },
+    onError: (error: any) => toast.error(error.response?.data?.detail || "Failed to activate user"),
   });
 
   return (
     <div className="animate-fade-in">
-      <TopBar title="User Management" subtitle={`${data?.total ?? 0} total users`} />
+      <TopBar 
+        title="User Management" 
+        subtitle={`${data?.total ?? 0} total users`} 
+        actions={
+          <button id="create-user-btn" onClick={() => setShowCreate(true)} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            New User
+          </button>
+        }
+      />
 
       <div className="p-6 space-y-4">
         {/* Filters */}
@@ -65,39 +78,39 @@ export default function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800">
-                  {["User","Role","Status","Department","Last Login","Actions"].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{h}</th>
+                <tr className="border-b border-slate-200 dark:border-slate-800">
+                  {["User", "Role", "Status", "Joined", "Last Active", ""].map((h) => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
                 {isLoading && <tr><td colSpan={6} className="py-12 text-center text-slate-500">Loading...</td></tr>}
                 {users.map((u: any) => (
-                  <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                          {u.full_name?.[0]}
+                          {u.full_name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white">{u.full_name}</p>
+                          <p className="font-medium text-slate-900 dark:text-white">{u.full_name}</p>
                           <p className="text-xs text-slate-500">{u.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`badge capitalize ${u.role === "admin" ? "badge-urgent" : u.role === "manager" || u.role === "supervisor" ? "badge-high" : "badge-medium"}`}>
-                        {u.role}
-                      </span>
-                    </td>
+                    <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-400">{u.role}</td>
                     <td className="px-4 py-3">
                       <span className={`badge ${u.status === "active" ? "badge-resolved" : u.status === "suspended" ? "badge-urgent" : "badge-closed"}`}>
                         {u.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-400">{u.department || "—"}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
+                      {u.created_at ? format(new Date(u.created_at), "MMM d, yyyy") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
                       {u.last_login_at ? format(new Date(u.last_login_at), "MMM d, HH:mm") : "Never"}
                     </td>
                     <td className="px-4 py-3">
@@ -130,14 +143,11 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={() => { qc.invalidateQueries({ queryKey: ["users"] }); setShowCreate(false); }} />}
     </div>
   );
 }
 
-# Add invite user modal
 
-# Add user status toggle
 
-# Search users by name or email
 
-# Add role filter dropdown

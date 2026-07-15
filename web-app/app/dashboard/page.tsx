@@ -179,7 +179,6 @@ export default function DashboardPage() {
                               hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 transition-all group">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 truncate">
-                      #{c.case_number} — {c.title}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {format(new Date(c.created_at), "MMM d, HH:mm")} · {c.source}
@@ -200,18 +199,10 @@ export default function DashboardPage() {
   );
 }
 
-# Add real-time case count badge
 
-# Add trend indicator to KPIs
 
-# Fix chart color scheme for dark mode
 
-# Add loading skeleton for charts
 
-# Add date range picker for analytics
 
-# Add AI accuracy metric card
 
-# Add recent activity feed
 
-# Make KPI cards clickable

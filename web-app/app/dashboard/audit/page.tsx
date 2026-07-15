@@ -102,7 +102,13 @@ export default function AuditPage() {
                         {l.action}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-400 text-xs font-mono">{l.actor_id?.slice(0,8) || "system"}</td>
+                    <td className="px-4 py-2.5 text-slate-400 text-xs font-mono">
+                      {l.actor_id === "99999999-9999-9999-9999-999999999999" ? (
+                        <span className="text-indigo-400 font-semibold tracking-wider">AI AGENT</span>
+                      ) : (
+                        l.actor_id?.slice(0,8) || "system"
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-xs text-slate-500">
                       {l.resource_type && <span className="capitalize">{l.resource_type}</span>}
                       {l.resource_id && <span className="font-mono ml-1 text-slate-600">·{l.resource_id.slice(0,8)}</span>}

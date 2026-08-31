@@ -65,6 +65,7 @@ export const usersApi = {
   updateStatus: (id: string, status: string) =>
     apiClient.patch(`/api/users/${id}/status`, { status }),
   deactivate: (id: string) => apiClient.delete(`/api/users/${id}`),
+  hardDelete: (id: string) => apiClient.delete(`/api/users/${id}/hard`),
 };
 
 // ─── Cases
@@ -81,6 +82,10 @@ export const casesApi = {
   getNotes: (id: string) => apiClient.get(`/api/cases/${id}/notes`),
   addNote: (id: string, content: string, is_internal = true) =>
     apiClient.post(`/api/cases/${id}/notes`, { content, is_internal }),
+  editNote: (id: string, noteId: string, content: string, is_internal = true) =>
+    apiClient.put(`/api/cases/${id}/notes/${noteId}`, { content, is_internal }),
+  deleteNote: (id: string, noteId: string) =>
+    apiClient.delete(`/api/cases/${id}/notes/${noteId}`),
   getTimeline: (id: string) => apiClient.get(`/api/cases/${id}/timeline`),
 };
 
@@ -89,6 +94,8 @@ export const aiApi = {
   predict: (text: string) => apiClient.post("/api/ai/predict", { text }),
   status: () => apiClient.get("/api/ai/status"),
   train: () => apiClient.post("/api/ai/train"),
+  generateReply: (case_description: string, category: string, sentiment: string, priority: string) => 
+    apiClient.post("/api/ai/generate-reply", { case_description, category, sentiment, priority }),
 };
 
 // ─── Chatbot

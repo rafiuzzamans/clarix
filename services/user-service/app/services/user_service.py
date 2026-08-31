@@ -121,6 +121,11 @@ class UserService:
             raise HTTPException(status_code=404, detail="User not found")
 
         update_data = data.model_dump(exclude_unset=True)
+        
+        if "email" in update_data and update_data["email"] != user.email:
+            existing = await self.db.execute(select(User).where(User.email == update_data["email"]))
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="Email already registered")
         for field, value in update_data.items():
             setattr(user, field, value)
 
@@ -182,5 +187,23 @@ class UserService:
     async def deactivate_user(self, user_id: str, actor_id: Optional[str] = None) -> dict:
         await self.update_status(user_id, UserStatus.inactive, actor_id)
         return {"message": "User deactivated successfully"}
+
+    async def delete_user(self, user_id: str, actor_id: Optional[str] = None) -> dict:
+        import uuid
+        result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        await self.db.delete(user)
+        await self.db.commit()
+
+        await _emit_audit(
+            action="user_deleted",
+            actor_id=actor_id,
+            resource_id=user_id,
+            description=f"User {user.email} was permanently deleted",
+        )
+        return {"message": "User permanently deleted"}
 
 

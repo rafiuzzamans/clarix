@@ -6,29 +6,38 @@ import { usersApi } from "@/lib/api";
 import toast from "react-hot-toast";
 
 interface Props {
+  user: any;
   onClose: () => void;
-  onCreated: () => void;
+  onUpdated: () => void;
 }
 
-export default function CreateUserModal({ onClose, onCreated }: Props) {
+export default function EditUserModal({ user, onClose, onUpdated }: Props) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    password: "",
-    role: "customer"
+    full_name: user.full_name || "",
+    email: user.email || "",
+    role: user.role || "customer"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await usersApi.create(form);
-      toast.success("User created successfully!");
-      onCreated();
+      const updates: any = {};
+      if (form.full_name !== user.full_name) updates.full_name = form.full_name;
+      if (form.email !== user.email) updates.email = form.email;
+      
+      if (Object.keys(updates).length > 0) {
+        await usersApi.update(user.id, updates);
+      }
+      if (form.role !== user.role) {
+        await usersApi.updateRole(user.id, form.role);
+      }
+      toast.success("User updated successfully!");
+      onUpdated();
     } catch (error: any) {
       const detail = error.response?.data?.detail;
-      const msg = Array.isArray(detail) ? detail[0].msg : detail || "Failed to create user";
+      const msg = Array.isArray(detail) ? detail[0].msg : detail || "Failed to update user";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -42,7 +51,7 @@ export default function CreateUserModal({ onClose, onCreated }: Props) {
           <X className="w-5 h-5" />
         </button>
         
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Create New User</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Edit User</h2>
         
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -53,27 +62,21 @@ export default function CreateUserModal({ onClose, onCreated }: Props) {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
             <input required type="email" className="input-field" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="john@example.com" />
           </div>
-          <div className="grid grid-cols-1 gap-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Role</label>
-              <select className="input-field" value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
-                <option value="customer">Customer</option>
-                <option value="agent">Agent</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-              <input required type="password" minLength={8} className="input-field" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="At least 8 chars, 1 uppercase, 1 digit" />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Role</label>
+            <select className="input-field" value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
+              <option value="customer">Customer</option>
+              <option value="agent">Agent</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
 
           <div className="pt-6 flex gap-3 justify-end">
             <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
             <button type="submit" disabled={loading} className="btn-primary min-w-[120px]">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Create User"}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Changes"}
             </button>
           </div>
         </form>

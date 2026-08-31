@@ -28,10 +28,23 @@ async def auto_resolve_cases():
                     
                     try:
                         resp = await client.post(
-                            f"{AI_SERVICE_URL}/predict",
+                            f"{AI_SERVICE_URL}/ai/predict",
                             json={"text": case["message"]}
                         )
-                        draft = "This issue was automatically resolved by the AI system."
+                        result = resp.json()
+                        cat = result.get("label_category", "unknown").replace("_", " ").title()
+                        conf = result.get("confidence", 0.0)
+                        draft = f"This issue was automatically resolved by the AI system (Category: {cat}, Confidence: {conf:.0%})."
+                        
+                        explanation = result.get("explanation", {})
+                        top_features = explanation.get("top_features", [])
+                        if top_features:
+                            terms = [f"'{f['feature']}'" for f in top_features[:3]]
+                            if len(terms) > 1:
+                                terms_str = ", ".join(terms[:-1]) + f", and {terms[-1]}"
+                            else:
+                                terms_str = terms[0]
+                            draft += f"\n\nReasoning: The AI system classified this case as '{cat}' primarily due to the presence of key terms such as {terms_str}."
                     except Exception as e:
                         print(f"[AGENT] Error generating reply: {e}")
                         draft = "This issue was automatically resolved by the AI system."

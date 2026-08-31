@@ -1,0 +1,1 @@
+from sqlalchemy import create_engine; import pandas as pd; engine = create_engine('postgresql://csadmin:cspassword123@localhost:5432/csplatform'); print(pd.read_sql('SELECT ai_explanation FROM cases WHERE ai_explanation IS NOT NULL LIMIT 1', engine))

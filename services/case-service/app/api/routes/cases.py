@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_agent_or_above, require_supervisor_or_above
 from app.models.case import CaseCategory, CasePriority, CaseStatus
 from app.models.user import User
-from app.schemas.case import CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate
+from app.schemas.case import CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate, NoteUpdate
 from app.services.case_service import CaseService
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -104,6 +104,29 @@ async def add_note(
     _=Depends(require_agent_or_above),
 ):
     return await CaseService(db).add_note(case_id, body, current_user.id)
+
+
+@router.put("/{case_id}/notes/{note_id}", summary="Update a note")
+async def update_note(
+    case_id: str,
+    note_id: str,
+    body: NoteUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_agent_or_above),
+):
+    return await CaseService(db).update_note(case_id, note_id, body, current_user.id)
+
+
+@router.delete("/{case_id}/notes/{note_id}", summary="Delete a note")
+async def delete_note(
+    case_id: str,
+    note_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(require_agent_or_above),
+):
+    return await CaseService(db).delete_note(case_id, note_id, current_user.id)
 
 
 @router.get("/{case_id}/notes", summary="Get case notes")

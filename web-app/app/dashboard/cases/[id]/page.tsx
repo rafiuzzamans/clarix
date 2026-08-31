@@ -2,13 +2,13 @@
 
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { casesApi } from "@/lib/api";
+import { casesApi, aiApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import TopBar from "@/components/layout/TopBar";
 import { format } from "date-fns";
 import {
   AlertTriangle, Bot, Clock, MessageSquare, Send,
-  ArrowUpCircle, CheckCircle, User, Paperclip,
+  ArrowUpCircle, CheckCircle, User, Paperclip, Edit2, Trash
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -22,6 +22,8 @@ export default function CaseDetailPage() {
   const [isInternal, setIsInternal] = useState(true);
   const [escalateReason, setEscalateReason] = useState("");
   const [showEscalate, setShowEscalate] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editNoteContent, setEditNoteContent] = useState("");
 
   const { data: caseData, isLoading } = useQuery({
     queryKey: ["case", id],
@@ -47,6 +49,24 @@ export default function CaseDetailPage() {
     },
   });
 
+  const editNoteMutation = useMutation({
+    mutationFn: ({ noteId, content }: { noteId: string, content: string }) => casesApi.editNote(id, noteId, content),
+    onSuccess: () => {
+      setEditingNoteId(null);
+      setEditNoteContent("");
+      qc.invalidateQueries({ queryKey: ["case-notes", id] });
+      toast.success("Note updated");
+    },
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (noteId: string) => casesApi.deleteNote(id, noteId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["case-notes", id] });
+      toast.success("Note deleted");
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: (status: string) => casesApi.update(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["case", id] }),
@@ -60,6 +80,23 @@ export default function CaseDetailPage() {
       qc.invalidateQueries({ queryKey: ["case", id] });
       toast.success("Case escalated");
     },
+  });
+
+  const generateReplyMutation = useMutation({
+    mutationFn: () => aiApi.generateReply(
+      caseData?.message || "",
+      caseData?.ai_category || caseData?.category || "general",
+      caseData?.ai_sentiment || caseData?.sentiment || "neutral",
+      caseData?.ai_priority || caseData?.priority || "medium"
+    ).then((r) => r.data),
+    onSuccess: (data) => {
+      setNote(data.generated_reply);
+      setIsInternal(false);
+      toast.success("AI reply generated!");
+    },
+    onError: () => {
+      toast.error("Failed to generate AI reply.");
+    }
   });
 
   if (isLoading) {
@@ -109,6 +146,50 @@ export default function CaseDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {c.ai_explanation && (() => {
+                const parsedAiExp = typeof c.ai_explanation === "string" ? JSON.parse(c.ai_explanation) : c.ai_explanation;
+                const topFeatures = Array.isArray(parsedAiExp) ? parsedAiExp : (parsedAiExp?.top_features || []);
+                const probabilities = Array.isArray(parsedAiExp) ? null : (parsedAiExp?.probabilities || null);
+                
+                return (
+                  <div className="mt-4 pt-4 border-t border-indigo-200 dark:border-indigo-800/30 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {probabilities && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Confidence Breakdown</h4>
+                        <div className="space-y-2">
+                          {Object.entries(probabilities)
+                            .sort((a: any, b: any) => b[1] - a[1])
+                            .slice(0, 3)
+                            .map(([cat, prob]: any) => (
+                              <div key={cat} className="flex items-center gap-2 text-xs">
+                                <span className="w-28 truncate text-slate-600 dark:text-slate-400 capitalize">{cat.replace("_", " ")}</span>
+                                <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.max(prob * 100, 1)}%` }}></div>
+                                </div>
+                                <span className="w-10 text-right text-slate-600 dark:text-slate-400">{(prob * 100).toFixed(1)}%</span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {topFeatures.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Top AI Features</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {topFeatures.slice(0, 5).map((feat: any, idx: number) => (
+                            <span key={idx} className="px-2 py-1 bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-800 rounded-md text-xs text-slate-600 dark:text-slate-300">
+                              {feat.feature} <span className={feat.direction === "positive" ? "text-emerald-500" : "text-rose-500"}>({feat.shap_value.toFixed(2)})</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -121,23 +202,72 @@ export default function CaseDetailPage() {
 
             <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
               {notes.map((n: any) => (
-                <div key={n.id} className={`p-3 rounded-xl text-sm ${
+                <div key={n.id} className={`p-3 rounded-xl text-sm relative group ${
                   n.is_internal
                     ? "bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800/30"
                     : "bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50"
                 }`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-slate-500">
-                      {n.is_internal
-                        ? "🔒 Internal note"
-                        : "💬 Public reply"}
-                    </span>
-                    <span className="text-xs text-slate-600">·</span>
-                    <span className="text-xs text-slate-500">
-                      {format(new Date(n.created_at), "MMM d, HH:mm")}
-                    </span>
+                  <div className="flex items-center gap-2 mb-1 justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">
+                        {n.is_internal
+                          ? "🔒 Internal note"
+                          : "💬 Public reply"}
+                      </span>
+                      <span className="text-xs text-slate-600">·</span>
+                      <span className="text-xs text-slate-500">
+                        {format(new Date(n.created_at), "MMM d, HH:mm")}
+                      </span>
+                    </div>
+                    {/* Action buttons (only show if author is current user or user is admin, for simplicity we allow if canEdit) */}
+                    {canEdit && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => { setEditingNoteId(n.id); setEditNoteContent(n.content); }}
+                          className="p-1 text-slate-400 hover:text-indigo-500 transition-colors"
+                          title="Edit Note"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => { if(confirm("Delete this note?")) deleteNoteMutation.mutate(n.id); }}
+                          className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                          title="Delete Note"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{n.content}</p>
+                  
+                  {editingNoteId === n.id ? (
+                    <div className="mt-2 space-y-2">
+                      <textarea
+                        className="input-field w-full text-sm"
+                        rows={3}
+                        value={editNoteContent}
+                        onChange={(e) => setEditNoteContent(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => setEditingNoteId(null)}
+                          className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => editNoteMutation.mutate({ noteId: n.id, content: editNoteContent })}
+                          disabled={editNoteMutation.isPending || !editNoteContent.trim()}
+                          className="btn-primary px-3 py-1 text-xs"
+                        >
+                          {editNoteMutation.isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap mt-1">{n.content}</p>
+                  )}
                 </div>
               ))}
               {notes.length === 0 && (
@@ -160,12 +290,19 @@ export default function CaseDetailPage() {
                   >
                     💬 Public
                   </button>
+                  <button
+                    onClick={() => generateReplyMutation.mutate()}
+                    disabled={generateReplyMutation.isPending}
+                    className="ml-auto px-3 py-1.5 rounded-lg transition-colors bg-purple-900/40 text-purple-300 border border-purple-700/50 hover:bg-purple-800/60 disabled:opacity-50"
+                  >
+                    {generateReplyMutation.isPending ? "Generating..." : "✨ Generate AI Reply"}
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   <textarea
                     id="note-input"
-                    rows={2}
-                    className="input-field flex-1 resize-none text-sm"
+                    rows={5}
+                    className="input-field flex-1 text-sm"
                     placeholder="Add a note..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}

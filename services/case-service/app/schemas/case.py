@@ -55,6 +55,7 @@ class CaseOut(BaseModel):
     ai_priority: Optional[CasePriority] = None
     ai_sentiment: Optional[CaseSentiment] = None
     ai_confidence: Optional[float] = None
+    ai_explanation: Optional[str] = None
     ai_overridden: bool
     created_at: datetime
     updated_at: datetime
@@ -74,6 +75,11 @@ class CaseListResponse(BaseModel):
 class NoteCreate(BaseModel):
     content: str
     is_internal: bool = True
+
+
+class NoteUpdate(BaseModel):
+    content: Optional[str] = None
+    is_internal: Optional[bool] = None
 
 
 class NoteOut(BaseModel):

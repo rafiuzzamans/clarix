@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { render } from "../../jest-utils";
 import "@testing-library/jest-dom";
 import { jest } from "@jest/globals";
 

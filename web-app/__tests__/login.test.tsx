@@ -1,6 +1,8 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { render } from "../jest-utils";
 import "@testing-library/jest-dom";
 import { jest } from "@jest/globals";
+import { AuthContext } from "@/lib/auth-context";
 
 // Mock Next.js navigation
 jest.mock("next/navigation", () => ({
@@ -13,11 +15,21 @@ jest.mock("react-hot-toast", () => ({
   default: { success: jest.fn(), error: jest.fn() },
 }));
 
-// Mock auth context
-const mockLogin = jest.fn();
-jest.mock("@/lib/auth-context", () => ({
-  useAuth: () => ({ login: mockLogin }),
-}));
+const mockLogin = jest.fn<any>();
+
+const renderWithAuth = (ui: React.ReactElement) => {
+  return render(
+    <AuthContext.Provider value={{
+      user: null,
+      loading: false,
+      login: mockLogin as any,
+      logout: jest.fn() as any,
+      isRole: jest.fn() as any
+    }}>
+      {ui}
+    </AuthContext.Provider>
+  );
+};
 
 import LoginPage from "@/app/login/page";
 
@@ -27,25 +39,25 @@ describe("LoginPage", () => {
   });
 
   it("renders email and password fields", () => {
-    render(<LoginPage />);
+    renderWithAuth(<LoginPage />);
     expect(screen.getByPlaceholderText("you@company.com")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("••••••••")).toBeInTheDocument();
   });
 
   it("renders demo account buttons", () => {
-    render(<LoginPage />);
-    expect(screen.getByTestId ? screen.queryByText("Admin") : screen.queryByText("Admin")).toBeTruthy();
+    renderWithAuth(<LoginPage />);
+    expect(screen.queryByText("Admin")).toBeTruthy();
   });
 
   it("shows sign in button", () => {
-    render(<LoginPage />);
+    renderWithAuth(<LoginPage />);
     const btn = screen.getByText("Sign in");
     expect(btn).toBeInTheDocument();
   });
 
   it("calls login on form submit", async () => {
     mockLogin.mockResolvedValue(undefined);
-    render(<LoginPage />);
+    renderWithAuth(<LoginPage />);
 
     fireEvent.change(screen.getByPlaceholderText("you@company.com"), {
       target: { value: "admin@csplatform.local" },
@@ -68,7 +80,7 @@ describe("LoginPage", () => {
     mockLogin.mockRejectedValue({
       response: { data: { detail: "MFA code required" } },
     });
-    render(<LoginPage />);
+    renderWithAuth(<LoginPage />);
 
     fireEvent.change(screen.getByPlaceholderText("you@company.com"), {
       target: { value: "admin@csplatform.local" },

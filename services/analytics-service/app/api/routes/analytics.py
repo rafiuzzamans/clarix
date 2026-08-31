@@ -11,7 +11,7 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 async def get_overview(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("""
         SELECT
-            COUNT(*) FILTER (WHERE status != 'closed')                           AS open_cases,
+            COUNT(*) FILTER (WHERE status NOT IN ('resolved', 'closed'))         AS open_cases,
             COUNT(*) FILTER (WHERE status = 'resolved' OR status = 'closed')     AS resolved_cases,
             COUNT(*) FILTER (WHERE is_escalated = TRUE)                          AS escalated_cases,
             COUNT(*) FILTER (WHERE priority = 'urgent')                          AS urgent_cases,
@@ -31,15 +31,22 @@ async def get_overview(db: AsyncSession = Depends(get_db)):
 @router.get("/case-volume", summary="Daily case volume for last N days")
 async def case_volume(days: int = 30, db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("""
+        WITH days AS (
+            SELECT generate_series(
+                DATE(NOW() - :days * INTERVAL '1 day'),
+                DATE(NOW()),
+                '1 day'::interval
+            )::date AS day
+        )
         SELECT
-            DATE(created_at AT TIME ZONE 'UTC') AS day,
-            COUNT(*)                             AS total,
-            COUNT(*) FILTER (WHERE status IN ('resolved','closed')) AS resolved,
-            COUNT(*) FILTER (WHERE is_escalated)                    AS escalated
-        FROM cases
-        WHERE created_at >= NOW() - :days * INTERVAL '1 day'
-        GROUP BY day
-        ORDER BY day ASC
+            d.day,
+            COUNT(c.id)                                             AS total,
+            COUNT(c.id) FILTER (WHERE c.status IN ('resolved','closed')) AS resolved,
+            COUNT(c.id) FILTER (WHERE c.is_escalated)                    AS escalated
+        FROM days d
+        LEFT JOIN cases c ON DATE(c.created_at AT TIME ZONE 'UTC') = d.day
+        GROUP BY d.day
+        ORDER BY d.day ASC
     """).bindparams(days=days))
     return {"data": [dict(r) for r in result.mappings().all()]}
 
@@ -47,15 +54,22 @@ async def case_volume(days: int = 30, db: AsyncSession = Depends(get_db)):
 @router.get("/sentiment-trend", summary="Sentiment breakdown over last N days")
 async def sentiment_trend(days: int = 30, db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("""
+        WITH days AS (
+            SELECT generate_series(
+                DATE(NOW() - :days * INTERVAL '1 day'),
+                DATE(NOW()),
+                '1 day'::interval
+            )::date AS day
+        )
         SELECT
-            DATE(created_at AT TIME ZONE 'UTC')                  AS day,
-            COUNT(*) FILTER (WHERE sentiment = 'positive')       AS positive,
-            COUNT(*) FILTER (WHERE sentiment = 'neutral')        AS neutral,
-            COUNT(*) FILTER (WHERE sentiment = 'negative')       AS negative
-        FROM cases
-        WHERE created_at >= NOW() - :days * INTERVAL '1 day'
-        GROUP BY day
-        ORDER BY day ASC
+            d.day,
+            COUNT(c.id) FILTER (WHERE c.sentiment = 'positive')       AS positive,
+            COUNT(c.id) FILTER (WHERE c.sentiment = 'neutral')        AS neutral,
+            COUNT(c.id) FILTER (WHERE c.sentiment = 'negative')       AS negative
+        FROM days d
+        LEFT JOIN cases c ON DATE(c.created_at AT TIME ZONE 'UTC') = d.day
+        GROUP BY d.day
+        ORDER BY d.day ASC
     """).bindparams(days=days))
     return {"data": [dict(r) for r in result.mappings().all()]}
 
@@ -98,7 +112,11 @@ async def agent_performance(db: AsyncSession = Depends(get_db)):
             COUNT(c.id) FILTER (WHERE c.status IN ('resolved','closed'))    AS resolved_cases,
             COUNT(c.id) FILTER (WHERE c.is_escalated)                       AS escalated_cases,
             ROUND(AVG(EXTRACT(EPOCH FROM (c.resolved_at - c.created_at)) / 3600)
-                  FILTER (WHERE c.resolved_at IS NOT NULL), 2)              AS avg_resolution_hours
+                  FILTER (WHERE c.resolved_at IS NOT NULL), 2)              AS avg_resolution_hours,
+            ROUND(
+                COUNT(c.id) FILTER (WHERE c.sentiment = 'positive')::numeric
+                / NULLIF(COUNT(c.id), 0), 2
+            )                                                               AS positive_sentiment_ratio
         FROM users u
         LEFT JOIN cases c ON c.assigned_to = u.id
         WHERE u.role IN ('agent', 'supervisor')
@@ -123,6 +141,7 @@ async def status_breakdown(db: AsyncSession = Depends(get_db)):
 async def sla_compliance(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("""
         SELECT
+            priority,
             COUNT(*)                                                           AS total,
             COUNT(*) FILTER (WHERE resolved_at <= sla_deadline)               AS within_sla,
             COUNT(*) FILTER (WHERE resolved_at > sla_deadline
@@ -133,9 +152,12 @@ async def sla_compliance(db: AsyncSession = Depends(get_db)):
             )                                                                  AS compliance_pct
         FROM cases
         WHERE sla_deadline IS NOT NULL
+        GROUP BY priority
+        ORDER BY CASE priority
+            WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3 WHEN 'low' THEN 4 END
     """))
-    row = result.mappings().one()
-    return dict(row)
+    return {"data": [dict(r) for r in result.mappings().all()]}
 
 
 @router.post("/reporting/refresh", summary="Refresh daily reporting table")

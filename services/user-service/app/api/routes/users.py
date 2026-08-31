@@ -83,3 +83,12 @@ async def deactivate_user(
     return await UserService(db).deactivate_user(user_id, str(current_user.id))
 
 
+@router.delete("/{user_id}/hard", summary="Permanently delete a user")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    return await UserService(db).delete_user(user_id, str(current_user.id))
+
+

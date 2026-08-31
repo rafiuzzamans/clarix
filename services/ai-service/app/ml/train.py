@@ -1,286 +1,273 @@
 """
-ML Pipeline — Text preprocessing, feature engineering, model training.
-Trains category, priority, and sentiment classifiers on support ticket data.
-Saves models to /models directory for the AI service to load.
+ml/scripts/train.py
+Trains all 3 classifiers on real CFPB + FinancialPhraseBank data:
+  - category_model.pkl   (6-class: mortgage, debt_collection, etc.)
+  - priority_model.pkl   (3-class: low, medium, high/urgent merged)
+  - sentiment_model.pkl  (3-class: positive, neutral, negative)
+
+Run from project root:
+    python ml/scripts/train.py
 """
-import os
-import json
+import os, json, sys
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.metrics import (
     classification_report, confusion_matrix, accuracy_score, f1_score
 )
-from sklearn.preprocessing import LabelEncoder
-import re
-import string
+from sklearn.utils import resample
 
-MODELS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "models")
+ROOT       = "/app"
+DATA_DIR   = "/data/processed"
+MODELS_DIR = "/app/models"
 os.makedirs(MODELS_DIR, exist_ok=True)
 
-# ─── Text Preprocessing ──────────────────────────────────────
-STOPWORDS = {
-    "i", "me", "my", "we", "our", "you", "your", "he", "she", "it", "they",
-    "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
-    "do", "does", "did", "will", "would", "could", "should", "may", "might",
-    "a", "an", "the", "and", "but", "or", "so", "in", "on", "at", "to", "for",
-    "of", "with", "that", "this", "these", "those", "from", "by", "about",
-}
+CFPB_PATH  = os.path.join(DATA_DIR, "cfpb_clean.csv")
+FPB_PATH   = os.path.join(DATA_DIR, "fpb_clean.csv")
 
 
-def clean_text(text: str) -> str:
-    """Lowercase, remove punctuation, strip stopwords."""
-    text = str(text).lower().strip()
-    text = re.sub(r"http\S+|www\S+", " ", text)         # remove URLs
-    text = re.sub(r"[^a-z0-9\s]", " ", text)            # keep alphanumeric
-    text = re.sub(r"\s+", " ", text)                    # collapse whitespace
-    tokens = [t for t in text.split() if t not in STOPWORDS and len(t) > 1]
-    return " ".join(tokens)
-
-
-# ─── Synthetic Data Generation ───────────────────────────────
-def generate_synthetic_dataset(n_samples: int = 3000) -> pd.DataFrame:
-    """Generate realistic synthetic support ticket data."""
-    categories = {
-        "billing": [
-            "I was charged twice for my subscription this month",
-            "My invoice shows an incorrect amount",
-            "I need a refund for the duplicate charge",
-            "My payment was declined but money left my account",
-            "I want to cancel my subscription and get a refund",
-            "I can't update my credit card information",
-            "Why was I charged more than I expected",
-            "My bank account shows a charge but no confirmation",
-        ],
-        "technical_support": [
-            "The app crashes every time I open it",
-            "I cannot log in to my account",
-            "The website is showing an error 500",
-            "My data is not syncing between devices",
-            "The feature is not working as expected",
-            "I am getting a server error when I try to submit",
-            "The mobile app is very slow and keeps freezing",
-            "I cannot upload files through the platform",
-        ],
-        "account": [
-            "I forgot my password and cannot reset it",
-            "I need to change my email address",
-            "My account has been locked out",
-            "I want to delete my account and all my data",
-            "I cannot verify my email address",
-            "Please help me update my profile information",
-            "I need to merge two accounts",
-            "My account was hacked and I need help",
-        ],
-        "shipping": [
-            "My order has not arrived after 2 weeks",
-            "I received the wrong item in my package",
-            "The tracking number is not updating",
-            "My package was marked delivered but I did not receive it",
-            "I need to change my delivery address",
-            "How long will my order take to arrive",
-            "Can I expedite my shipping",
-            "My order was returned to sender",
-        ],
-        "returns": [
-            "I want to return a product I bought last week",
-            "How do I initiate a return for a damaged item",
-            "I received a defective product and need a replacement",
-            "My return was rejected but the item was faulty",
-            "How long do refunds take to process",
-            "I want to exchange my item for a different size",
-            "The return window was missed due to shipping delays",
-            "I have not received my refund after 2 weeks",
-        ],
-        "product_inquiry": [
-            "Does this product come with a warranty",
-            "What are the specifications of your premium plan",
-            "Is this service available in my country",
-            "Can I use the product on multiple devices",
-            "What is the difference between plan A and plan B",
-            "Do you have a free trial available",
-            "How does the cancellation policy work",
-            "What features are included in the enterprise tier",
-        ],
-        "complaint": [
-            "I am very unhappy with the service I received",
-            "Your agent was extremely rude and unhelpful",
-            "This is the third time I have had this problem",
-            "I am considering switching to a competitor",
-            "Your service has gone downhill significantly",
-            "I have been waiting 10 days for a resolution",
-            "Nobody is responding to my previous emails",
-            "I am furious about how my case was handled",
-        ],
-        "feedback": [
-            "I love the new interface you released this week",
-            "The customer support team was incredibly helpful",
-            "I have a suggestion for improving the checkout process",
-            "Your platform is one of the best I have used",
-            "I think the mobile app needs a dark mode",
-            "Overall great experience but the loading is a bit slow",
-            "Would love to see monthly billing as an option",
-            "Thank you for resolving my issue so quickly",
-        ],
-    }
-
-    sentiments = {
-        "complaint": "negative",
-        "billing":   "negative",
-        "returns":   "negative",
-        "technical_support": "neutral",
-        "account":        "neutral",
-        "shipping":       "negative",
-        "product_inquiry": "positive",
-        "feedback":       "positive",
-    }
-
-    priorities = {
-        "complaint": "high",
-        "billing":   "high",
-        "technical_support": "high",
-        "account":   "medium",
-        "shipping":  "medium",
-        "returns":   "low",
-        "product_inquiry": "low",
-        "feedback":  "low",
-    }
-
-    rows = []
-    rng = np.random.default_rng(42)
-
-    for _ in range(n_samples):
-        cat = rng.choice(list(categories.keys()))
-        templates = categories[cat]
-        base_text = rng.choice(templates)
-
-        # Add some noise / variation
-        suffixes = [
-            "", " Please help me.", " This is urgent.",
-            " I have been waiting for days.", " Thank you in advance.",
-            " I am very frustrated.", " Can someone assist me?",
-        ]
-        text = base_text + rng.choice(suffixes)
-
-        # Vary sentiment slightly
-        base_sent = sentiments[cat]
-        sent = rng.choice(
-            [base_sent, "neutral"],
-            p=[0.75, 0.25]
-        )
-
-        # Vary priority slightly
-        base_pri = priorities[cat]
-        all_pris = ["low", "medium", "high", "urgent"]
-        base_idx = all_pris.index(base_pri)
-        shift = rng.integers(-1, 2)
-        pri_idx = max(0, min(3, base_idx + shift))
-        pri = all_pris[pri_idx]
-
-        rows.append({
-            "text": text,
-            "category": cat,
-            "sentiment": sent,
-            "priority": pri,
-        })
-
-    df = pd.DataFrame(rows)
-    df["cleaned_text"] = df["text"].apply(clean_text)
-    return df
-
-
-# ─── Model Training ──────────────────────────────────────────
-def build_pipeline(clf) -> Pipeline:
+def tfidf_pipeline(clf):
     return Pipeline([
         ("tfidf", TfidfVectorizer(
             ngram_range=(1, 2),
-            max_features=10000,
+            max_features=15000,
             min_df=2,
             sublinear_tf=True,
+            strip_accents="unicode",
         )),
         ("clf", clf),
     ])
 
 
-def train_and_evaluate(X_train, X_test, y_train, y_test, clf, label: str) -> dict:
-    pipeline = build_pipeline(clf)
-    pipeline.fit(X_train, y_train)
+def evaluate_and_save(pipeline, X_test, y_test, model_name, model_path, labels):
     y_pred = pipeline.predict(X_test)
-
     acc = accuracy_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred, average="weighted")
+    f1  = f1_score(y_test, y_pred, average="weighted")
     report = classification_report(y_test, y_pred, output_dict=True)
-    cm = confusion_matrix(y_test, y_pred).tolist()
+    cm     = confusion_matrix(y_test, y_pred, labels=labels).tolist()
 
-    print(f"\n{'='*50}")
-    print(f"  {label.upper()} MODEL")
-    print(f"{'='*50}")
-    print(f"  Accuracy:  {acc:.4f}")
-    print(f"  F1 (weighted): {f1:.4f}")
-    print(classification_report(y_test, y_pred))
+    print(f"\n{'='*52}")
+    print(f"  {model_name.upper()} MODEL RESULTS")
+    print(f"{'='*52}")
+    print(f"  Accuracy       : {acc:.4f}")
+    print(f"  Weighted F1    : {f1:.4f}")
+    print(f"\n  Per-class F1:")
+    for cls in labels:
+        cls_f1 = report.get(cls, {}).get("f1-score", 0.0)
+        flag   = "  << LOW" if cls_f1 < 0.60 else ""
+        print(f"    {cls:<20} {cls_f1:.4f}{flag}")
+    print(f"\n{classification_report(y_test, y_pred)}")
+
+    joblib.dump(pipeline, model_path)
+    print(f"  Model saved -> {model_path}")
 
     return {
-        "model": pipeline,
-        "metrics": {
-            "accuracy": acc,
-            "f1_weighted": f1,
-            "report": report,
-            "confusion_matrix": cm,
-        }
+        "accuracy": round(acc, 4),
+        "f1_weighted": round(f1, 4),
+        "per_class_f1": {
+            cls: round(report.get(cls, {}).get("f1-score", 0.0), 4)
+            for cls in labels
+        },
+        "confusion_matrix": cm,
+        "labels": labels,
     }
 
 
-def train_all():
-    print("Generating synthetic dataset...")
-    df = generate_synthetic_dataset(3000)
-    df.to_csv(os.path.join(MODELS_DIR, "training_data.csv"), index=False)
+def balance_classes(df, text_col, label_col, max_per_class=8000, min_per_class=500):
+    """Upsample minority classes, cap majority classes."""
+    frames = []
+    for label in df[label_col].unique():
+        subset = df[df[label_col] == label]
+        n = len(subset)
+        if n < min_per_class:
+            subset = resample(subset, replace=True, n_samples=min_per_class, random_state=42)
+        elif n > max_per_class:
+            subset = subset.sample(max_per_class, random_state=42)
+        frames.append(subset)
+    return pd.concat(frames).sample(frac=1, random_state=42).reset_index(drop=True)
+
+
+# â”€â”€ 1. Category Model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+def train_category():
+    print("\n" + "="*52)
+    print("  TRAINING: Category Classifier (CFPB Data)")
+    print("="*52)
+
+    df = pd.read_csv(CFPB_PATH, usecols=["cleaned_text", "category"])
+    df = df.dropna(subset=["cleaned_text", "category"])
+    print(f"  Loaded {len(df):,} rows")
+
+    # Balance: cap debt_collection dominance, upsample student_loan
+    df = balance_classes(df, "cleaned_text", "category",
+                         max_per_class=10000, min_per_class=2000)
+    print(f"  After balancing: {len(df):,} rows")
+    print(df["category"].value_counts().to_string())
 
     X = df["cleaned_text"]
+    y = df["category"]
+    labels = sorted(y.unique().tolist())
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    print(f"\n  Train: {len(X_train):,}  Test: {len(X_test):,}")
+
+    # Train Logistic Regression (best for sparse TF-IDF, needed for SHAP)
+    clf = LogisticRegression(
+        max_iter=1000, C=5.0,
+        class_weight="balanced",
+        solver="lbfgs",
+        random_state=42,
+    )
+    pipeline = tfidf_pipeline(clf)
+    print("\n  Fitting LogisticRegression...")
+    pipeline.fit(X_train, y_train)
+
+    metrics = evaluate_and_save(
+        pipeline, X_test, y_test,
+        "Category",
+        os.path.join(MODELS_DIR, "category_model.pkl"),
+        labels,
+    )
+    return metrics
+
+
+# â”€â”€ 2. Priority Model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+def train_priority():
+    print("\n" + "="*52)
+    print("  TRAINING: Priority Classifier (CFPB Data)")
+    print("="*52)
+
+    df = pd.read_csv(CFPB_PATH, usecols=["cleaned_text", "priority"])
+    df = df.dropna(subset=["cleaned_text", "priority"])
+
+    # Merge 'urgent' into 'high' for a cleaner 3-class problem
+    df["priority"] = df["priority"].replace("urgent", "high")
+    print(f"  Loaded {len(df):,} rows")
+    print(df["priority"].value_counts().to_string())
+
+    # Balance classes
+    df = balance_classes(df, "cleaned_text", "priority",
+                         max_per_class=10000, min_per_class=2000)
+    print(f"  After balancing: {len(df):,} rows")
+
+    X = df["cleaned_text"]
+    y = df["priority"]
+    labels = sorted(y.unique().tolist())
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    # Use LogisticRegression (faster than GBC, still strong, SHAP-compatible)
+    clf = LogisticRegression(
+        max_iter=1000, C=3.0,
+        class_weight="balanced",
+        solver="lbfgs",
+        random_state=42,
+    )
+    pipeline = tfidf_pipeline(clf)
+    print("\n  Fitting LogisticRegression for priority...")
+    pipeline.fit(X_train, y_train)
+
+    # 5-fold CV
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv_scores = cross_val_score(pipeline, X, y, cv=cv, scoring="f1_weighted")
+    print(f"\n  5-fold CV F1: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
+
+    metrics = evaluate_and_save(
+        pipeline, X_test, y_test,
+        "Priority",
+        os.path.join(MODELS_DIR, "priority_model.pkl"),
+        labels,
+    )
+    metrics["cv_f1_mean"] = round(float(cv_scores.mean()), 4)
+    metrics["cv_f1_std"]  = round(float(cv_scores.std()),  4)
+    return metrics
+
+
+# â”€â”€ 3. Sentiment Model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+def train_sentiment():
+    print("\n" + "="*52)
+    print("  TRAINING: Sentiment Classifier (FinancialPhraseBank)")
+    print("="*52)
+
+    df = pd.read_csv(FPB_PATH, usecols=["cleaned_text", "sentiment"])
+    df = df.dropna(subset=["cleaned_text", "sentiment"])
+    print(f"  Loaded {len(df):,} rows")
+    print(df["sentiment"].value_counts().to_string())
+
+    # Upsample negative (only 604 samples)
+    df = balance_classes(df, "cleaned_text", "sentiment",
+                         max_per_class=3000, min_per_class=600)
+
+    X = df["cleaned_text"]
+    y = df["sentiment"]
+    labels = sorted(y.unique().tolist())
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    print(f"\n  Train: {len(X_train):,}  Test: {len(X_test):,}")
+
+    clf = LogisticRegression(
+        max_iter=1000, C=1.0,
+        class_weight="balanced",
+        solver="lbfgs",
+        random_state=42,
+    )
+    pipeline = tfidf_pipeline(clf)
+    print("\n  Fitting LogisticRegression for sentiment...")
+    pipeline.fit(X_train, y_train)
+
+    metrics = evaluate_and_save(
+        pipeline, X_test, y_test,
+        "Sentiment",
+        os.path.join(MODELS_DIR, "sentiment_model.pkl"),
+        labels,
+    )
+    return metrics
+
+
+# â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+def train_all():
+    print("\n" + "="*52)
+    print("  CLARIX â€” ML Training Pipeline")
+    print("  CLARIX — ML Training Pipeline")
+    print("  Real data: CFPB + FinancialPhraseBank")
+    print("="*52)
+
+    for path in [CFPB_PATH, FPB_PATH]:
+        if not os.path.exists(path):
+            print(f"ERROR: {path} not found. Run preprocess.py first.")
+            sys.exit(1)
+
+    from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as STOPWORDS
     results = {}
+    results["category"]  = train_category()
+    results["priority"]  = train_priority()
+    results["sentiment"] = train_sentiment()
 
-    # ── Category model ───────────────────────────────────────
-    y_cat = df["category"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y_cat, test_size=0.2, random_state=42, stratify=y_cat)
-    cat_result = train_and_evaluate(
-        X_train, X_test, y_train, y_test,
-        LogisticRegression(max_iter=1000, C=5, class_weight="balanced"),
-        "Category"
-    )
-    joblib.dump(cat_result["model"], os.path.join(MODELS_DIR, "category_model.pkl"))
-    results["category"] = cat_result["metrics"]
-
-    # ── Priority model ───────────────────────────────────────
-    y_pri = df["priority"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y_pri, test_size=0.2, random_state=42, stratify=y_pri)
-    pri_result = train_and_evaluate(
-        X_train, X_test, y_train, y_test,
-        GradientBoostingClassifier(n_estimators=100, random_state=42),
-        "Priority"
-    )
-    joblib.dump(pri_result["model"], os.path.join(MODELS_DIR, "priority_model.pkl"))
-    results["priority"] = pri_result["metrics"]
-
-    # ── Sentiment model ──────────────────────────────────────
-    y_sent = df["sentiment"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y_sent, test_size=0.2, random_state=42, stratify=y_sent)
-    sent_result = train_and_evaluate(
-        X_train, X_test, y_train, y_test,
-        LogisticRegression(max_iter=1000, C=3, class_weight="balanced"),
-        "Sentiment"
-    )
-    joblib.dump(sent_result["model"], os.path.join(MODELS_DIR, "sentiment_model.pkl"))
-    results["sentiment"] = sent_result["metrics"]
-
-    # Save metrics report
-    with open(os.path.join(MODELS_DIR, "evaluation_report.json"), "w") as f:
+    # Save combined evaluation report
+    report_path = os.path.join(MODELS_DIR, "evaluation_report.json")
+    with open(report_path, "w") as f:
         json.dump(results, f, indent=2)
 
-    print("\n✅ All models trained and saved to:", MODELS_DIR)
+    print("\n" + "="*52)
+    print("  TRAINING COMPLETE")
+    print(f"  Category  F1: {results['category']['f1_weighted']}")
+    print(f"  Priority  F1: {results['priority']['f1_weighted']}")
+    print(f"  Sentiment F1: {results['sentiment']['f1_weighted']}")
+    print(f"\n  All models -> {MODELS_DIR}")
+    print(f"  Report    -> {report_path}")
+    print("="*52)
+
     return results
 
 

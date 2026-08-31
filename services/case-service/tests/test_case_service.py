@@ -110,7 +110,7 @@ class TestChatbotEngine:
     def _detect(cls, text: str) -> str:
         import sys, os
         chatbot_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..", "chatbot-service"
+            os.path.dirname(__file__), "..", "..", "chatbot-service"
         )
         if chatbot_path not in sys.path:
             sys.path.insert(0, chatbot_path)

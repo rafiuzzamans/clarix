@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Category Breakdown</h3>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="count" nameKey="category" paddingAngle={2}>
+                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="total" nameKey="category" paddingAngle={2}>
                   {categoryData?.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Current Status</h3>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="count" nameKey="status" paddingAngle={2}>
+                <Pie data={statusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="total" nameKey="status" paddingAngle={2}>
                   {statusData?.map((_: any, i: number) => <Cell key={i} fill={COLORS[(i+2) % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
                 {agentPerformance?.map((agent: any) => (
                   <tr key={agent.agent_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                     <td className="px-5 py-3">
-                      <p className="font-medium text-slate-900 dark:text-white">{agent.agent_name}</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{agent.full_name}</p>
                     </td>
                     <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{agent.resolved_cases} cases</td>
                     <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{agent.avg_resolution_hours ? `${agent.avg_resolution_hours.toFixed(1)} hrs` : "—"}</td>

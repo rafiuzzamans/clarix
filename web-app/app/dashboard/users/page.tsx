@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/lib/api";
 import TopBar from "@/components/layout/TopBar";
-import { Plus, Search, RefreshCw, ShieldCheck, UserX, UserCheck } from "lucide-react";
+import { Plus, Search, RefreshCw, ShieldCheck, UserX, UserCheck, Edit2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import CreateUserModal from "../../../components/users/CreateUserModal";
+import EditUserModal from "../../../components/users/EditUserModal";
 
 const ROLES = ["","customer","agent","supervisor","manager","admin"];
 const STATUSES = ["","active","inactive","suspended"];
@@ -19,6 +20,7 @@ export default function UsersPage() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["users", page, search, role, status],
@@ -33,6 +35,12 @@ export default function UsersPage() {
     mutationFn: (id: string) => usersApi.deactivate(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("User deactivated"); },
     onError: (error: any) => toast.error(error.response?.data?.detail || "Failed to deactivate user"),
+  });
+
+  const hardDelete = useMutation({
+    mutationFn: (id: string) => usersApi.hardDelete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("User permanently deleted"); },
+    onError: (error: any) => toast.error(error.response?.data?.detail || "Failed to delete user"),
   });
 
   const activate = useMutation({
@@ -114,10 +122,18 @@ export default function UsersPage() {
                       {u.last_login_at ? format(new Date(u.last_login_at), "MMM d, HH:mm") : "Never"}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => setEditingUser(u)} title="Edit"
+                                className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-900/20 rounded-lg transition-all">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => { if(confirm("Are you sure you want to permanently delete this user? This action cannot be undone.")) hardDelete.mutate(u.id); }} title="Delete"
+                                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-900/20 rounded-lg transition-all">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                         {u.status === "active" ? (
-                          <button onClick={() => deactivate.mutate(u.id)} title="Deactivate"
-                                  className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all">
+                          <button onClick={() => { if(confirm("Are you sure you want to deactivate this user?")) deactivate.mutate(u.id); }} title="Deactivate"
+                                  className="p-1.5 text-slate-400 hover:text-orange-400 hover:bg-orange-900/20 rounded-lg transition-all">
                             <UserX className="w-4 h-4" />
                           </button>
                         ) : (
@@ -127,7 +143,7 @@ export default function UsersPage() {
                           </button>
                         )}
                         {u.mfa_enabled && (
-                          <span title="MFA enabled">
+                          <span title="MFA enabled" className="ml-1">
                             <ShieldCheck className="w-4 h-4 text-emerald-400" />
                           </span>
                         )}
@@ -144,6 +160,7 @@ export default function UsersPage() {
         </div>
       </div>
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={() => { qc.invalidateQueries({ queryKey: ["users"] }); setShowCreate(false); }} />}
+      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onUpdated={() => { qc.invalidateQueries({ queryKey: ["users"] }); setEditingUser(null); }} />}
     </div>
   );
 }

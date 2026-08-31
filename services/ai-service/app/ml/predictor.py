@@ -11,6 +11,7 @@ import os
 import re
 import time
 import logging
+import threading
 import joblib
 import numpy as np
 from typing import Optional, Dict, Any, List
@@ -27,15 +28,7 @@ _DEFAULT = os.path.join(
 MODELS_DIR = os.environ.get("MODELS_PATH", os.path.normpath(_DEFAULT))
 
 # ── Text cleaning (must match preprocessing exactly) ──────────────────────────
-STOPWORDS = {
-    "i","me","my","we","our","you","your","he","she","it","they","is","are",
-    "was","were","be","been","being","have","has","had","do","does","did",
-    "will","would","could","should","may","might","a","an","the","and","but",
-    "or","so","in","on","at","to","for","of","with","that","this","these",
-    "those","from","by","about","not","no","nor","as","if","then","than",
-    "too","very","just","also","up","out","into","over","after",
-}
-
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as STOPWORDS
 
 def clean_text(text: str) -> str:
     """Normalise text — must match ml/scripts/preprocess.py."""
@@ -52,6 +45,7 @@ def clean_text(text: str) -> str:
 class ModelRegistry:
     """Singleton — loads all models once at FastAPI startup."""
     _instance = None
+    _lock = threading.Lock()  # Thread lock for safe concurrent inference
 
     def __new__(cls):
         if cls._instance is None:
@@ -99,30 +93,13 @@ class ModelRegistry:
         import shap
         import pandas as pd
 
-        # Load a background sample of cleaned narratives
-        data_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "..", "..",
-            "ml", "data", "processed", "cfpb_clean.csv"
-        )
-        data_path = os.path.normpath(data_path)
-
-        if os.path.exists(data_path):
-            bg = pd.read_csv(data_path, usecols=["cleaned_text"], nrows=500)
-            bg_texts = bg["cleaned_text"].fillna("").tolist()
-        else:
-            # Fallback: generic financial phrases
-            bg_texts = [
-                "credit card charge dispute", "mortgage payment late",
-                "debt collection harassment", "student loan repayment",
-                "bank account fraud", "credit reporting error",
-            ] * 30
-
         vectorizer = pipeline.named_steps["tfidf"]
         clf        = pipeline.named_steps["clf"]
 
         # Transform background to dense matrix (SHAP requires dense)
-        bg_matrix = vectorizer.transform(bg_texts[:200])
-        bg_dense  = bg_matrix.toarray()
+        # Using a zero matrix as background ensures SHAP values exactly equal coef * TF-IDF value
+        # This prevents the explainer from heavily weighting weird words just because they weren't in the background
+        bg_dense = np.zeros((1, len(vectorizer.get_feature_names_out())))
 
         explainer = shap.LinearExplainer(clf, bg_dense)
         return explainer, vectorizer
@@ -175,7 +152,7 @@ def _shap_top_features(
                 "shap_value": round(float(vals[i]), 5),
                 "direction":  "positive" if vals[i] > 0 else "negative",
             }
-            for i in top_idx
+            for i in top_idx if abs(vals[i]) > 1e-6
         ]
 
     except Exception as exc:
@@ -231,25 +208,25 @@ def predict(text: str) -> Dict[str, Any]:
             "probabilities": {cls: round(float(p), 4) for cls, p in zip(classes, proba)},
         }
 
-    cat_result  = _classify(registry.category_model,  cleaned)
-    pri_result  = _classify(registry.priority_model,   cleaned)
-    sent_result = _classify(registry.sentiment_model,  cleaned)
+    # Use a lock to prevent concurrent threads from corrupting sklearn model state
+    with registry._lock:
+        cat_result  = _classify(registry.category_model,  cleaned)
+        pri_result  = _classify(registry.priority_model,   cleaned)
+        sent_result = _classify(registry.sentiment_model,  cleaned)
 
-    # ── SHAP or TF-IDF fallback ───────────────────────────────────────────────
-    if registry._shap_available:
-        top_features = _shap_top_features(
-            registry._shap_cat_explainer,
-            cleaned,
-            cat_result["label"],
-        )
-        method = "shap_linear"
-    else:
-        _, vectorizer = registry._shap_cat_explainer if hasattr(registry, "_shap_cat_explainer") \
-            else (None, registry.category_model.named_steps["tfidf"])
-        top_features = _tfidf_top_features(
-            registry.category_model.named_steps["tfidf"], cleaned
-        )
-        method = "tfidf_proxy"
+        # ── SHAP or TF-IDF fallback ───────────────────────────────────────────────
+        if registry._shap_available:
+            top_features = _shap_top_features(
+                registry._shap_cat_explainer,
+                cleaned,
+                cat_result["label"],
+            )
+            method = "shap_linear"
+        else:
+            top_features = _tfidf_top_features(
+                registry.category_model.named_steps["tfidf"], cleaned
+            )
+            method = "tfidf_proxy"
 
     elapsed_ms = round((time.perf_counter() - start) * 1000, 1)
     if elapsed_ms > 500:

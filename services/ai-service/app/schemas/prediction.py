@@ -42,3 +42,14 @@ class ModelStatusResponse(BaseModel):
     models_loaded: bool
     models_available: List[str]
     evaluation_report: Optional[Dict[str, Any]] = None
+
+
+class ReplyRequest(BaseModel):
+    case_description: str
+    category: str
+    sentiment: str
+    priority: str
+
+
+class ReplyResponse(BaseModel):
+    generated_reply: str

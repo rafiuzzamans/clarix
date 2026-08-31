@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.case import Case, CaseNote, CaseTimeline, CasePriority, CaseStatus
 from app.schemas.case import (
-    CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate, NoteOut, TimelineOut
+    CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate, NoteUpdate, NoteOut, TimelineOut
 )
 
 SLA_HOURS = {
@@ -26,7 +26,7 @@ async def _call_ai_service(text: str) -> Optional[dict]:
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.post(
-                f"{settings.AI_SERVICE_URL}/predict",
+                f"{settings.AI_SERVICE_URL}/ai/predict",
                 json={"text": text}
             )
             if resp.status_code == 200:
@@ -87,13 +87,20 @@ class CaseService:
         # Determine priority (AI or default)
         priority = data.priority
         ai_priority = ai_cat = ai_sent = None
-        ai_conf = None
+        ai_conf = ai_exp = None
 
         if ai_data:
             ai_cat = ai_data.get("label_category")
             ai_priority = ai_data.get("label_priority")
             ai_sent = ai_data.get("label_sentiment")
             ai_conf = ai_data.get("confidence")
+            if "explanation" in ai_data and "top_features" in ai_data["explanation"]:
+                import json
+                ai_exp_obj = {
+                    "top_features": ai_data["explanation"]["top_features"],
+                    "probabilities": ai_data.get("category", {}).get("probabilities", {})
+                }
+                ai_exp = json.dumps(ai_exp_obj)
             if not priority and ai_priority:
                 try:
                     priority = CasePriority(ai_priority)
@@ -115,6 +122,7 @@ class CaseService:
             ai_category=ai_cat,
             ai_sentiment=ai_sent,
             ai_confidence=ai_conf,
+            ai_explanation=ai_exp,
         )
 
         # Set category from AI if not provided
@@ -336,6 +344,40 @@ class CaseService:
         await self.db.commit()
         await self.db.refresh(note)
         return NoteOut.model_validate(note)
+
+    async def update_note(self, case_id: str, note_id: str, data: NoteUpdate, actor_id: str) -> NoteOut:
+        result = await self.db.execute(select(CaseNote).where(CaseNote.id == note_id, CaseNote.case_id == case_id))
+        note = result.scalar_one_or_none()
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+
+        # Allow update if actor is the author, or if we assume supervisors can (omitted for simplicity, checked at route)
+        if data.content is not None:
+            note.content = data.content
+        if data.is_internal is not None:
+            note.is_internal = data.is_internal
+
+        await _add_timeline(
+            self.db, case_id, actor_id, "note_updated",
+            f"Note updated"
+        )
+        await self.db.commit()
+        await self.db.refresh(note)
+        return NoteOut.model_validate(note)
+
+    async def delete_note(self, case_id: str, note_id: str, actor_id: str):
+        result = await self.db.execute(select(CaseNote).where(CaseNote.id == note_id, CaseNote.case_id == case_id))
+        note = result.scalar_one_or_none()
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+
+        await self.db.delete(note)
+        await _add_timeline(
+            self.db, case_id, actor_id, "note_deleted",
+            f"Note deleted"
+        )
+        await self.db.commit()
+        return {"status": "deleted"}
 
     async def get_timeline(self, case_id: str) -> list[TimelineOut]:
         result = await self.db.execute(

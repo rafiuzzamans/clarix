@@ -1,4 +1,4 @@
-﻿"""
+"""
 ml/scripts/train.py
 Trains all 3 classifiers on real CFPB + FinancialPhraseBank data:
   - category_model.pkl   (6-class: mortgage, debt_collection, etc.)
@@ -239,6 +239,7 @@ def train_sentiment():
 def train_all():
     print("\n" + "="*52)
     print("  CLARIX â€” ML Training Pipeline")
+    print("  CLARIX — ML Training Pipeline")
     print("  Real data: CFPB + FinancialPhraseBank")
     print("="*52)
 
@@ -247,6 +248,7 @@ def train_all():
             print(f"ERROR: {path} not found. Run preprocess.py first.")
             sys.exit(1)
 
+    from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as STOPWORDS
     results = {}
     results["category"]  = train_category()
     results["priority"]  = train_priority()

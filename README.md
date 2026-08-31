@@ -1,4 +1,4 @@
-# 🤖 AI-Powered Customer Service Intelligence Platform
+# 🤖 Clarix: AI-Powered Customer Service Intelligence Platform
 
 **A local-first, cloud-ready, microservices-based multi-channel decision support system**
 
@@ -26,8 +26,8 @@ Infrastructure      → Docker Compose | MailHog (email) | Redis (caching)
 
 ### 1. Clone and configure
 ```bash
-git clone <repo>
-cd Project
+git clone https://github.com/rafiuzzamans/clarix.git
+cd clarix
 cp .env .env  # Already configured for local development
 ```
 

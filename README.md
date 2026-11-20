@@ -46,7 +46,7 @@ docker-compose up --build
 
 This starts:
 - **PostgreSQL** on port 5432
-- **MongoDB** on port 27017
+- **MongoDB** on host port 27018 (container port 27017)
 - **Redis** on port 6379
 - **MailHog** (email UI) on http://localhost:8025
 - **All 10 microservices** on ports 8001–8010
@@ -106,6 +106,29 @@ To manually train the production pipeline:
 curl -X POST http://localhost:8004/ai/train
 ```
 Or via the Admin panel: http://localhost:3000/dashboard/admin
+
+---
+
+## ⚖️ Routing & Automatic Resolution
+
+**Routing is by category; priority only sets the SLA deadline** (`case-service/app/services/case_service.py`):
+
+| Category | Team |
+|---|---|
+| `debt_collection`, `credit_card` | Billing Team |
+| `mortgage`, `bank_account` | Tier 2 Support |
+| `credit_reporting`, `student_loan` | Tier 1 Support |
+
+**Automatic resolution (no human in the loop).** When the category model's confidence is **> 0.85**, the case is assigned to the AI agent. A background worker (`automation-service/app/workers/ai_agent.py`) polls every 10 seconds and, for each case assigned to the AI agent, it:
+1. calls `/ai/predict` and writes a customer-visible note (category, confidence, top-3 SHAP terms),
+2. marks the case `resolved` and adds a timeline event,
+3. writes a `case_resolved_by_ai` entry to the audit log.
+
+On the held-out v2 test set (12,256 complaints), 66.2% of cases score above 0.85 and 96.8% of those are classified correctly (one-off measurement, not yet a saved script).
+
+> **Known limitation:** these are solely automated decisions. There is currently no customer-facing way to contest the outcome or request human review (relevant to GDPR Art. 22). Corrections made by agents are recorded in the timeline and audit log. The `ai_overridden` column exists in the schema but the update path does not set it yet.
+
+The worker reads `DATABASE_URL` from the environment. `docker-compose.yml` builds it from `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB` in `.env`; there is no hard-coded default.
 
 ---
 
@@ -290,4 +313,4 @@ Project/
 
 ## 📜 License
 
-Built for academic dissertation purposes.
+Released under the MIT License. See [LICENSE](LICENSE). Built for academic dissertation purposes.

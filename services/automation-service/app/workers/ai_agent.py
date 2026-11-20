@@ -4,7 +4,7 @@ import asyncpg
 import httpx
 from datetime import datetime, timezone
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://csadmin:cspassword123@postgres:5432/csplatform")
+DATABASE_URL = os.getenv("DATABASE_URL")
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai-service:8004")
 CASE_SERVICE_URL = os.getenv("CASE_SERVICE_URL", "http://case-service:8003")
 AI_AGENT_ID = "99999999-9999-9999-9999-999999999999"
@@ -13,6 +13,10 @@ async def auto_resolve_cases():
     print("[AGENT] Starting autonomous resolution loop...")
     while True:
         try:
+            if not DATABASE_URL:
+                print("[AGENT] Error: DATABASE_URL is not set.")
+                await asyncio.sleep(10)
+                continue
             conn = await asyncpg.connect(DATABASE_URL)
             cases = await conn.fetch(
                 "SELECT id, message, category, sentiment FROM cases WHERE assigned_to = $1 AND status != 'resolved' AND status != 'closed'",

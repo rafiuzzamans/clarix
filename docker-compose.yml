@@ -198,6 +198,7 @@ services:
     env_file: .env
     environment:
       SERVICE_NAME: automation-service
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     ports:
       - "${AUTOMATION_SERVICE_PORT}:${AUTOMATION_SERVICE_PORT}"
     depends_on:

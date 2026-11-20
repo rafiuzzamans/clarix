@@ -5,7 +5,7 @@ import os
 from sqlalchemy import create_engine, text
 
 # Database setup
-engine = create_engine('postgresql://csadmin:cspassword123@localhost:5432/csplatform')
+engine = create_engine(os.environ['DATABASE_URL'])
 
 async def process_case(client, case):
     case_id, title, message = case

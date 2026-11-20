@@ -4,7 +4,7 @@ import asyncpg
 import httpx
 from datetime import datetime, timezone
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://csadmin:cspassword123@localhost:5432/csplatform")
+DATABASE_URL = os.environ["DATABASE_URL"]
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://localhost:8004")
 
 async def fix_bad_notes():

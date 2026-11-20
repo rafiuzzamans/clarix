@@ -65,6 +65,8 @@ Open **http://localhost:3000**
 
 ## 🔑 Default Accounts
 
+> ⚠️ Demo accounts for local development only. Change these credentials before any public deployment.
+
 | Role       | Email                          | Password    |
 |------------|-------------------------------|-------------|
 | Admin      | admin@csplatform.local        | Admin@123   |

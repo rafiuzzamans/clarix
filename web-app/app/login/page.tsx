@@ -52,11 +52,10 @@ export default function LoginPage() {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-black' : 'bg-slate-50'} flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-500`}>
       {/* Theme Toggle */}
-      <button 
+      <button
         onClick={toggleTheme}
-        className={`absolute top-6 right-6 p-3 rounded-full z-50 transition-all ${
-          theme === 'dark' ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
-        }`}
+        className={`absolute top-6 right-6 p-3 rounded-full z-50 transition-all ${theme === 'dark' ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/5 text-black hover:bg-black/10'
+          }`}
       >
         {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
@@ -155,11 +154,10 @@ export default function LoginPage() {
                   key={acc.email}
                   id={`demo-${acc.label.toLowerCase().replace(' ', '-')}`}
                   onClick={() => setForm({ ...form, email: acc.email, password: "Admin@123" })}
-                  className={`text-xs px-4 py-2.5 rounded-xl transition-all duration-300 font-medium ${
-                    theme === 'dark' 
-                      ? 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/5 hover:border-white/20' 
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
-                  }`}
+                  className={`text-xs px-4 py-2.5 rounded-xl transition-all duration-300 font-medium ${theme === 'dark'
+                    ? 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/5 hover:border-white/20'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                    }`}
                 >
                   {acc.label}
                 </button>

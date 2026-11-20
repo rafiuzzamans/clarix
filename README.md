@@ -94,18 +94,53 @@ Open **http://localhost:3000**
 
 ## 🧠 AI Features
 
-- **Category classification** — 9 categories (billing, technical support, account, etc.)
-- **Priority prediction** — low / medium / high / urgent
-- **Sentiment analysis** — positive / neutral / negative
-- **SHAP explainability** — top contributing features per prediction
-- **Confidence scores** — per-class probabilities
+- **Category classification** — 6 financial categories mapped from CFPB (debt collection, mortgage, credit reporting, bank account, credit card, student loan)
+- **Priority prediction** — high / medium / low based on intake urgency and complexity
+- **Sentiment analysis** — positive / neutral / negative financial sentiment
+- **SHAP explainability** — deterministic feature attributions per prediction via `shap.LinearExplainer`
+- **Confidence scores** — calibrated per-class probabilities
 - **Auto ML trigger** — via Admin → Train Models button
 
-To manually train:
+To manually train the production pipeline:
 ```bash
 curl -X POST http://localhost:8004/ai/train
 ```
 Or via the Admin panel: http://localhost:3000/dashboard/admin
+
+---
+
+## 🔬 Empirical Evaluation & Benchmarks (v2)
+
+To ensure academic rigor and reproducibility, CLARIX includes an automated empirical evaluation suite (`ml/scripts/rerun_experiments.py` & `ml/scripts/benchmark_shap_latency.py`).
+
+### Scientific Evaluation Protocol
+1. **Deduplication**: Strict deduplication on `complaint_id` and normalized narrative text prior to dataset splitting.
+2. **Leakage Prevention**: Priority labels are generated strictly at intake using whole-word regex patterns (`\b...\b`) and text length without utilizing post-resolution signals (`timely_response`).
+3. **Natural Test Distribution**: Stratified 80/20 train/test split performed *before* balancing; minority upsampling and majority capping are applied strictly to the training fold.
+4. **Fair Model Tuning**: All candidate models share identical TF-IDF vectorization (15,000 max features, unigrams + bigrams, sublinear TF) and 5-fold stratified cross-validation on the training set.
+
+### Model Performance Comparison (Natural Test Set)
+
+| Task | Logistic Regression (Production) | LinearSVC | Random Forest | Multinomial Naive Bayes |
+| :--- | :---: | :---: | :---: | :---: |
+| **Category (Weighted F1)** | **0.8853** (Macro: 0.8739) | **0.8874** (Macro: 0.8764) | 0.8620 (Macro: 0.8473) | 0.8527 (Macro: 0.8392) |
+| **Priority (Weighted F1)** | **0.9163** (Macro: 0.8885) | **0.9177** (Macro: 0.8871) | 0.9025 (Macro: 0.8763) | 0.6822 (Macro: 0.6434) |
+| **Sentiment (Weighted F1)** | **0.7414** (Macro: 0.6859) | **0.7445** (Macro: 0.6810) | 0.7269 (Macro: 0.6499) | 0.7176 (Macro: 0.6476) |
+
+### SHAP Latency & Throughput Benchmark
+
+*In-process latency measured over 200 real complaint requests (excluding warmup):*
+- **Prediction Only**: 2.0 ms mean (p50: 1.8 ms, p95: 3.6 ms)
+- **Prediction + Linear SHAP (Reused Explainer)**: **4.3 ms mean** (p50: 3.8 ms, p95: 8.0 ms)
+- **Throughput**: 271.0 req/s (1 worker), 196.7 req/s (5 workers), 169.0 req/s (10 workers)
+- **Baseline Invariance**: 86.5% mean Jaccard overlap of top-10 features and 86.7% identical top-1 feature between empty-document (zero) background and training-mean background.
+
+To re-run the benchmark suite:
+```bash
+python ml/scripts/rerun_experiments.py
+python ml/scripts/benchmark_shap_latency.py
+```
+Reports and artifacts are persisted to `ml/models_v2/evaluation_report_v2.json` and `ml/models_v2/benchmark_report.json`.
 
 ---
 

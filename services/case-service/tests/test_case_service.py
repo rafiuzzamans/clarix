@@ -114,7 +114,7 @@ class TestChatbotEngine:
         )
         if chatbot_path not in sys.path:
             sys.path.insert(0, chatbot_path)
-        from app.services.chatbot_engine import detect_intent
+        from app.services.chatbot_engine import detect_intent  # type: ignore
         return detect_intent(text)
 
     def test_greeting_intent(self):

@@ -1,0 +1,74 @@
+{
+  "system": {
+    "os": "Windows-11-10.0.22621-SP0",
+    "python": "3.14.0",
+    "processor": "Intel64 Family 6 Model 154 Stepping 4, GenuineIntel",
+    "cpu_count_logical": 12,
+    "shap": "0.51.0",
+    "ram_gb": 34.0,
+    "cpu_count_physical": 10,
+    "sklearn": "1.8.0"
+  },
+  "setup": {
+    "warmup_excluded": 10,
+    "requests": 200,
+    "scope": "in-process: clean_text + 3 predictions (+ SHAP); excludes HTTP, DB writes"
+  },
+  "latency": {
+    "predict_only": {
+      "n": 200,
+      "mean_ms": 2.0,
+      "p50_ms": 1.8,
+      "p95_ms": 3.6,
+      "max_ms": 6.2
+    },
+    "predict_plus_shap_explainer_reused": {
+      "n": 200,
+      "mean_ms": 4.3,
+      "p50_ms": 3.8,
+      "p95_ms": 8.0,
+      "max_ms": 12.7
+    },
+    "predict_plus_shap_explainer_rebuilt_each_request": {
+      "n": 200,
+      "mean_ms": 4.1,
+      "p50_ms": 3.8,
+      "p95_ms": 6.4,
+      "max_ms": 11.5
+    },
+    "concurrency_predict_plus_shap": {
+      "1_workers": {
+        "n": 200,
+        "mean_ms": 3.5,
+        "p50_ms": 3.3,
+        "p95_ms": 5.2,
+        "max_ms": 8.2,
+        "throughput_req_per_s": 271.0
+      },
+      "5_workers": {
+        "n": 200,
+        "mean_ms": 25.1,
+        "p50_ms": 25.0,
+        "p95_ms": 34.2,
+        "max_ms": 41.5,
+        "throughput_req_per_s": 196.7
+      },
+      "10_workers": {
+        "n": 200,
+        "mean_ms": 58.1,
+        "p50_ms": 55.4,
+        "p95_ms": 94.2,
+        "max_ms": 123.5,
+        "throughput_req_per_s": 169.0
+      }
+    }
+  },
+  "shap_baseline_check": {
+    "cases": 30,
+    "top_k": 10,
+    "mean_jaccard_topk": 0.865,
+    "min_jaccard_topk": 0.667,
+    "same_top1_term_share": 0.867,
+    "mean_background_built_from_n_complaints": 2000
+  }
+}

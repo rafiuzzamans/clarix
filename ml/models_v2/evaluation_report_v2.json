@@ -1,0 +1,952 @@
+{
+  "protocol": {
+    "dedup": "exact duplicates on complaint_id and cleaned_text removed before split",
+    "priority_labels": "keywords (whole-word) + length>200 words; timely_response not used",
+    "split": "stratified 80/20, random_state=42, before balancing",
+    "balancing": "training set only; cap without replacement, upsample with replacement",
+    "tuning": "GridSearchCV on training set only, scoring=f1_weighted",
+    "test_distribution": "natural (not balanced)",
+    "fast_mode": false
+  },
+  "data": {
+    "cfpb": {
+      "raw_rows": 555957,
+      "after_narrative_filter": 66756,
+      "after_category_mapping": 62968,
+      "after_min_length": 62649,
+      "after_dedup": 61276,
+      "category_counts": {
+        "debt_collection": 16968,
+        "mortgage": 14883,
+        "credit_reporting": 11514,
+        "bank_account": 7909,
+        "credit_card": 7884,
+        "student_loan": 2118
+      },
+      "priority_counts": {
+        "low": 29451,
+        "high": 22174,
+        "medium": 9651
+      }
+    },
+    "fpb": {
+      "raw_sentences": 4846,
+      "after_min_length": 4826,
+      "after_dedup": 4804,
+      "sentiment_counts": {
+        "neutral": 2842,
+        "positive": 1359,
+        "negative": 603
+      }
+    }
+  },
+  "category": {
+    "n_train_before_balancing": 49020,
+    "n_train_after_balancing": 43845,
+    "train_counts_after_balancing": {
+      "mortgage": 10000,
+      "debt_collection": 10000,
+      "credit_reporting": 9211,
+      "bank_account": 6327,
+      "credit_card": 6307,
+      "student_loan": 2000
+    },
+    "n_test": 12256,
+    "test_counts": {
+      "debt_collection": 3394,
+      "mortgage": 2977,
+      "credit_reporting": 2303,
+      "bank_account": 1582,
+      "credit_card": 1577,
+      "student_loan": 423
+    },
+    "models": {
+      "Logistic Regression": {
+        "accuracy": 0.8851,
+        "f1_weighted": 0.8853,
+        "f1_macro": 0.8739,
+        "per_class": {
+          "bank_account": {
+            "precision": 0.8527,
+            "recall": 0.8489,
+            "f1-score": 0.8508,
+            "support": 1582
+          },
+          "credit_card": {
+            "precision": 0.8154,
+            "recall": 0.8573,
+            "f1-score": 0.8359,
+            "support": 1577
+          },
+          "credit_reporting": {
+            "precision": 0.8714,
+            "recall": 0.8797,
+            "f1-score": 0.8755,
+            "support": 2303
+          },
+          "debt_collection": {
+            "precision": 0.8954,
+            "recall": 0.8701,
+            "f1-score": 0.8825,
+            "support": 3394
+          },
+          "mortgage": {
+            "precision": 0.9464,
+            "recall": 0.9436,
+            "f1-score": 0.945,
+            "support": 2977
+          },
+          "student_loan": {
+            "precision": 0.8449,
+            "recall": 0.8629,
+            "f1-score": 0.8538,
+            "support": 423
+          }
+        },
+        "confusion_matrix": [
+          [
+            1343,
+            110,
+            22,
+            62,
+            42,
+            3
+          ],
+          [
+            92,
+            1352,
+            58,
+            64,
+            10,
+            1
+          ],
+          [
+            16,
+            66,
+            2026,
+            141,
+            42,
+            12
+          ],
+          [
+            71,
+            109,
+            158,
+            2953,
+            53,
+            50
+          ],
+          [
+            49,
+            19,
+            51,
+            48,
+            2809,
+            1
+          ],
+          [
+            4,
+            2,
+            10,
+            30,
+            12,
+            365
+          ]
+        ],
+        "labels": [
+          "bank_account",
+          "credit_card",
+          "credit_reporting",
+          "debt_collection",
+          "mortgage",
+          "student_loan"
+        ],
+        "best_params": {
+          "clf__C": 3.0
+        },
+        "cv_f1_weighted_mean": 0.8834,
+        "cv_f1_weighted_std": 0.0011,
+        "fit_seconds_incl_grid_search": 130.5
+      },
+      "LinearSVC": {
+        "accuracy": 0.8875,
+        "f1_weighted": 0.8874,
+        "f1_macro": 0.8764,
+        "per_class": {
+          "bank_account": {
+            "precision": 0.8629,
+            "recall": 0.8394,
+            "f1-score": 0.851,
+            "support": 1582
+          },
+          "credit_card": {
+            "precision": 0.8284,
+            "recall": 0.8573,
+            "f1-score": 0.8426,
+            "support": 1577
+          },
+          "credit_reporting": {
+            "precision": 0.8759,
+            "recall": 0.8762,
+            "f1-score": 0.8761,
+            "support": 2303
+          },
+          "debt_collection": {
+            "precision": 0.8898,
+            "recall": 0.8757,
+            "f1-score": 0.8827,
+            "support": 3394
+          },
+          "mortgage": {
+            "precision": 0.9418,
+            "recall": 0.956,
+            "f1-score": 0.9488,
+            "support": 2977
+          },
+          "student_loan": {
+            "precision": 0.8616,
+            "recall": 0.8534,
+            "f1-score": 0.8575,
+            "support": 423
+          }
+        },
+        "confusion_matrix": [
+          [
+            1328,
+            112,
+            24,
+            71,
+            45,
+            2
+          ],
+          [
+            83,
+            1352,
+            59,
+            69,
+            12,
+            2
+          ],
+          [
+            18,
+            61,
+            2018,
+            153,
+            43,
+            10
+          ],
+          [
+            72,
+            96,
+            148,
+            2972,
+            63,
+            43
+          ],
+          [
+            34,
+            9,
+            46,
+            41,
+            2846,
+            1
+          ],
+          [
+            4,
+            2,
+            9,
+            34,
+            13,
+            361
+          ]
+        ],
+        "labels": [
+          "bank_account",
+          "credit_card",
+          "credit_reporting",
+          "debt_collection",
+          "mortgage",
+          "student_loan"
+        ],
+        "best_params": {
+          "clf__C": 0.5
+        },
+        "cv_f1_weighted_mean": 0.8861,
+        "cv_f1_weighted_std": 0.0016,
+        "fit_seconds_incl_grid_search": 100.8
+      },
+      "Multinomial Naive Bayes": {
+        "accuracy": 0.8529,
+        "f1_weighted": 0.8527,
+        "f1_macro": 0.8392,
+        "per_class": {
+          "bank_account": {
+            "precision": 0.8347,
+            "recall": 0.811,
+            "f1-score": 0.8227,
+            "support": 1582
+          },
+          "credit_card": {
+            "precision": 0.7982,
+            "recall": 0.78,
+            "f1-score": 0.789,
+            "support": 1577
+          },
+          "credit_reporting": {
+            "precision": 0.7942,
+            "recall": 0.8597,
+            "f1-score": 0.8257,
+            "support": 2303
+          },
+          "debt_collection": {
+            "precision": 0.8733,
+            "recall": 0.8365,
+            "f1-score": 0.8545,
+            "support": 3394
+          },
+          "mortgage": {
+            "precision": 0.9148,
+            "recall": 0.9379,
+            "f1-score": 0.9262,
+            "support": 2977
+          },
+          "student_loan": {
+            "precision": 0.8613,
+            "recall": 0.7778,
+            "f1-score": 0.8174,
+            "support": 423
+          }
+        },
+        "confusion_matrix": [
+          [
+            1283,
+            114,
+            33,
+            82,
+            64,
+            6
+          ],
+          [
+            124,
+            1230,
+            113,
+            88,
+            20,
+            2
+          ],
+          [
+            18,
+            83,
+            1980,
+            156,
+            60,
+            6
+          ],
+          [
+            57,
+            84,
+            288,
+            2839,
+            88,
+            38
+          ],
+          [
+            50,
+            26,
+            66,
+            42,
+            2792,
+            1
+          ],
+          [
+            5,
+            4,
+            13,
+            44,
+            28,
+            329
+          ]
+        ],
+        "labels": [
+          "bank_account",
+          "credit_card",
+          "credit_reporting",
+          "debt_collection",
+          "mortgage",
+          "student_loan"
+        ],
+        "best_params": {
+          "clf__alpha": 0.1
+        },
+        "cv_f1_weighted_mean": 0.8523,
+        "cv_f1_weighted_std": 0.0017,
+        "fit_seconds_incl_grid_search": 56.1
+      },
+      "Random Forest": {
+        "accuracy": 0.8624,
+        "f1_weighted": 0.862,
+        "f1_macro": 0.8473,
+        "per_class": {
+          "bank_account": {
+            "precision": 0.8675,
+            "recall": 0.7946,
+            "f1-score": 0.8294,
+            "support": 1582
+          },
+          "credit_card": {
+            "precision": 0.8245,
+            "recall": 0.7952,
+            "f1-score": 0.8096,
+            "support": 1577
+          },
+          "credit_reporting": {
+            "precision": 0.8049,
+            "recall": 0.8832,
+            "f1-score": 0.8422,
+            "support": 2303
+          },
+          "debt_collection": {
+            "precision": 0.8732,
+            "recall": 0.8562,
+            "f1-score": 0.8646,
+            "support": 3394
+          },
+          "mortgage": {
+            "precision": 0.9132,
+            "recall": 0.9402,
+            "f1-score": 0.9265,
+            "support": 2977
+          },
+          "student_loan": {
+            "precision": 0.8743,
+            "recall": 0.7565,
+            "f1-score": 0.8112,
+            "support": 423
+          }
+        },
+        "confusion_matrix": [
+          [
+            1257,
+            122,
+            39,
+            95,
+            67,
+            2
+          ],
+          [
+            83,
+            1254,
+            123,
+            95,
+            22,
+            0
+          ],
+          [
+            14,
+            62,
+            2034,
+            137,
+            49,
+            7
+          ],
+          [
+            53,
+            67,
+            242,
+            2906,
+            91,
+            35
+          ],
+          [
+            38,
+            13,
+            72,
+            53,
+            2799,
+            2
+          ],
+          [
+            4,
+            3,
+            17,
+            42,
+            37,
+            320
+          ]
+        ],
+        "labels": [
+          "bank_account",
+          "credit_card",
+          "credit_reporting",
+          "debt_collection",
+          "mortgage",
+          "student_loan"
+        ],
+        "best_params": {
+          "clf__max_features": "sqrt"
+        },
+        "cv_f1_weighted_mean": 0.8631,
+        "cv_f1_weighted_std": 0.0015,
+        "fit_seconds_incl_grid_search": 548.8
+      }
+    }
+  },
+  "priority": {
+    "n_train_before_balancing": 49020,
+    "n_train_after_balancing": 27721,
+    "train_counts_after_balancing": {
+      "low": 10000,
+      "high": 10000,
+      "medium": 7721
+    },
+    "n_test": 12256,
+    "test_counts": {
+      "low": 5891,
+      "high": 4435,
+      "medium": 1930
+    },
+    "models": {
+      "Logistic Regression": {
+        "accuracy": 0.912,
+        "f1_weighted": 0.9163,
+        "f1_macro": 0.8885,
+        "per_class": {
+          "high": {
+            "precision": 0.9878,
+            "recall": 0.9157,
+            "f1-score": 0.9504,
+            "support": 4435
+          },
+          "low": {
+            "precision": 0.9633,
+            "recall": 0.9092,
+            "f1-score": 0.9355,
+            "support": 5891
+          },
+          "medium": {
+            "precision": 0.6809,
+            "recall": 0.9119,
+            "f1-score": 0.7796,
+            "support": 1930
+          }
+        },
+        "confusion_matrix": [
+          [
+            4061,
+            68,
+            306
+          ],
+          [
+            16,
+            5356,
+            519
+          ],
+          [
+            34,
+            136,
+            1760
+          ]
+        ],
+        "labels": [
+          "high",
+          "low",
+          "medium"
+        ],
+        "best_params": {
+          "clf__C": 10.0
+        },
+        "cv_f1_weighted_mean": 0.9048,
+        "cv_f1_weighted_std": 0.0036,
+        "fit_seconds_incl_grid_search": 108.5
+      },
+      "LinearSVC": {
+        "accuracy": 0.9135,
+        "f1_weighted": 0.9177,
+        "f1_macro": 0.8871,
+        "per_class": {
+          "high": {
+            "precision": 0.9942,
+            "recall": 0.9312,
+            "f1-score": 0.9617,
+            "support": 4435
+          },
+          "low": {
+            "precision": 0.9576,
+            "recall": 0.9126,
+            "f1-score": 0.9346,
+            "support": 5891
+          },
+          "medium": {
+            "precision": 0.6793,
+            "recall": 0.8756,
+            "f1-score": 0.7651,
+            "support": 1930
+          }
+        },
+        "confusion_matrix": [
+          [
+            4130,
+            18,
+            287
+          ],
+          [
+            4,
+            5376,
+            511
+          ],
+          [
+            20,
+            220,
+            1690
+          ]
+        ],
+        "labels": [
+          "high",
+          "low",
+          "medium"
+        ],
+        "best_params": {
+          "clf__C": 1.0
+        },
+        "cv_f1_weighted_mean": 0.9068,
+        "cv_f1_weighted_std": 0.0037,
+        "fit_seconds_incl_grid_search": 74.5
+      },
+      "Multinomial Naive Bayes": {
+        "accuracy": 0.6687,
+        "f1_weighted": 0.6822,
+        "f1_macro": 0.6434,
+        "per_class": {
+          "high": {
+            "precision": 0.7413,
+            "recall": 0.7425,
+            "f1-score": 0.7419,
+            "support": 4435
+          },
+          "low": {
+            "precision": 0.8259,
+            "recall": 0.6089,
+            "f1-score": 0.701,
+            "support": 5891
+          },
+          "medium": {
+            "precision": 0.3791,
+            "recall": 0.6819,
+            "f1-score": 0.4873,
+            "support": 1930
+          }
+        },
+        "confusion_matrix": [
+          [
+            3293,
+            428,
+            714
+          ],
+          [
+            863,
+            3587,
+            1441
+          ],
+          [
+            286,
+            328,
+            1316
+          ]
+        ],
+        "labels": [
+          "high",
+          "low",
+          "medium"
+        ],
+        "best_params": {
+          "clf__alpha": 0.1
+        },
+        "cv_f1_weighted_mean": 0.6768,
+        "cv_f1_weighted_std": 0.0057,
+        "fit_seconds_incl_grid_search": 50.1
+      },
+      "Random Forest": {
+        "accuracy": 0.9005,
+        "f1_weighted": 0.9025,
+        "f1_macro": 0.8763,
+        "per_class": {
+          "high": {
+            "precision": 0.9761,
+            "recall": 0.8273,
+            "f1-score": 0.8955,
+            "support": 4435
+          },
+          "low": {
+            "precision": 0.9336,
+            "recall": 0.9574,
+            "f1-score": 0.9454,
+            "support": 5891
+          },
+          "medium": {
+            "precision": 0.7036,
+            "recall": 0.8953,
+            "f1-score": 0.788,
+            "support": 1930
+          }
+        },
+        "confusion_matrix": [
+          [
+            3669,
+            252,
+            514
+          ],
+          [
+            37,
+            5640,
+            214
+          ],
+          [
+            53,
+            149,
+            1728
+          ]
+        ],
+        "labels": [
+          "high",
+          "low",
+          "medium"
+        ],
+        "best_params": {
+          "clf__max_features": "sqrt"
+        },
+        "cv_f1_weighted_mean": 0.8848,
+        "cv_f1_weighted_std": 0.0049,
+        "fit_seconds_incl_grid_search": 281.0
+      }
+    }
+  },
+  "sentiment": {
+    "n_train_before_balancing": 3843,
+    "n_train_after_balancing": 3961,
+    "train_counts_after_balancing": {
+      "neutral": 2274,
+      "positive": 1087,
+      "negative": 600
+    },
+    "n_test": 961,
+    "test_counts": {
+      "neutral": 568,
+      "positive": 272,
+      "negative": 121
+    },
+    "models": {
+      "Logistic Regression": {
+        "accuracy": 0.744,
+        "f1_weighted": 0.7414,
+        "f1_macro": 0.6859,
+        "per_class": {
+          "negative": {
+            "precision": 0.7375,
+            "recall": 0.4876,
+            "f1-score": 0.5871,
+            "support": 121
+          },
+          "neutral": {
+            "precision": 0.8058,
+            "recall": 0.8257,
+            "f1-score": 0.8157,
+            "support": 568
+          },
+          "positive": {
+            "precision": 0.6254,
+            "recall": 0.6875,
+            "f1-score": 0.655,
+            "support": 272
+          }
+        },
+        "confusion_matrix": [
+          [
+            59,
+            33,
+            29
+          ],
+          [
+            16,
+            469,
+            83
+          ],
+          [
+            5,
+            80,
+            187
+          ]
+        ],
+        "labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "best_params": {
+          "clf__C": 10.0
+        },
+        "cv_f1_weighted_mean": 0.7806,
+        "cv_f1_weighted_std": 0.0127,
+        "fit_seconds_incl_grid_search": 11.0
+      },
+      "LinearSVC": {
+        "accuracy": 0.7503,
+        "f1_weighted": 0.7445,
+        "f1_macro": 0.681,
+        "per_class": {
+          "negative": {
+            "precision": 0.75,
+            "recall": 0.4463,
+            "f1-score": 0.5596,
+            "support": 121
+          },
+          "neutral": {
+            "precision": 0.8,
+            "recall": 0.8521,
+            "f1-score": 0.8252,
+            "support": 568
+          },
+          "positive": {
+            "precision": 0.6444,
+            "recall": 0.6728,
+            "f1-score": 0.6583,
+            "support": 272
+          }
+        },
+        "confusion_matrix": [
+          [
+            54,
+            35,
+            32
+          ],
+          [
+            15,
+            484,
+            69
+          ],
+          [
+            3,
+            86,
+            183
+          ]
+        ],
+        "labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "best_params": {
+          "clf__C": 1.0
+        },
+        "cv_f1_weighted_mean": 0.7841,
+        "cv_f1_weighted_std": 0.0132,
+        "fit_seconds_incl_grid_search": 5.6
+      },
+      "Multinomial Naive Bayes": {
+        "accuracy": 0.7315,
+        "f1_weighted": 0.7176,
+        "f1_macro": 0.6476,
+        "per_class": {
+          "negative": {
+            "precision": 0.75,
+            "recall": 0.4215,
+            "f1-score": 0.5397,
+            "support": 121
+          },
+          "neutral": {
+            "precision": 0.7571,
+            "recall": 0.8944,
+            "f1-score": 0.82,
+            "support": 568
+          },
+          "positive": {
+            "precision": 0.6486,
+            "recall": 0.5294,
+            "f1-score": 0.583,
+            "support": 272
+          }
+        },
+        "confusion_matrix": [
+          [
+            51,
+            42,
+            28
+          ],
+          [
+            10,
+            508,
+            50
+          ],
+          [
+            7,
+            121,
+            144
+          ]
+        ],
+        "labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "best_params": {
+          "clf__alpha": 0.1
+        },
+        "cv_f1_weighted_mean": 0.738,
+        "cv_f1_weighted_std": 0.0135,
+        "fit_seconds_incl_grid_search": 1.0
+      },
+      "Random Forest": {
+        "accuracy": 0.7503,
+        "f1_weighted": 0.7269,
+        "f1_macro": 0.6499,
+        "per_class": {
+          "negative": {
+            "precision": 0.9556,
+            "recall": 0.3554,
+            "f1-score": 0.5181,
+            "support": 121
+          },
+          "neutral": {
+            "precision": 0.7384,
+            "recall": 0.9542,
+            "f1-score": 0.8326,
+            "support": 568
+          },
+          "positive": {
+            "precision": 0.7473,
+            "recall": 0.5,
+            "f1-score": 0.5991,
+            "support": 272
+          }
+        },
+        "confusion_matrix": [
+          [
+            43,
+            56,
+            22
+          ],
+          [
+            2,
+            542,
+            24
+          ],
+          [
+            0,
+            136,
+            136
+          ]
+        ],
+        "labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "best_params": {
+          "clf__max_features": "sqrt"
+        },
+        "cv_f1_weighted_mean": 0.7594,
+        "cv_f1_weighted_std": 0.0132,
+        "fit_seconds_incl_grid_search": 17.9
+      }
+    }
+  }
+}

@@ -37,12 +37,18 @@ ENV/
 ml/models/*.pkl
 ml/models/*.pt
 ml/models/*.bin
+ml/models_v2/*.pkl
 ml/data/raw/
 ml/data/processed/*.csv
 !ml/models/.gitkeep
+!ml/models_v2/.gitkeep
 !ml/data/.gitkeep
 !ml/data/processed/.gitkeep
 !ml/data/raw/.gitkeep
+
+# Presentations & Temp Scratch
+*.pptx
+Untitled*.png
 
 # ─── Jupyter ──────────────────────────────────────────────────
 .ipynb_checkpoints/

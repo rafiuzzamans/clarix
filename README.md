@@ -212,7 +212,7 @@ Auto-generated Swagger UI available at:
 ## 🧪 Running Tests
 
 ### Backend (Unit & Integration)
-Run the complete test suite (240+ tests) across all microservices and cross-service integration tests from the root directory:
+Run the complete suite (206 service tests + 37 cross-service integration tests) from the root directory:
 ```bash
 python -m pytest services/ tests/ -v
 ```

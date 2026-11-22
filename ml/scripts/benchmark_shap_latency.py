@@ -18,9 +18,10 @@ Part B - SHAP baseline check on 30 test complaints (category model):
 Output: ml/models_v2/benchmark_report.json
 
 Run from project root:
-    python ml/scripts/benchmark_shap_latency.py
+    python ml/scripts/benchmark_shap_latency.py                          (v2 models)
+    python ml/scripts/benchmark_shap_latency.py --models-dir ml/models_v3 (v3 models)
 """
-import os, sys, json, time, platform
+import os, sys, json, time, platform, argparse
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import pandas as pd
@@ -31,7 +32,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import preprocess as pp
 
-MODELS = os.path.join(pp.ROOT, "ml", "models_v2")
+MODELS = os.path.join(pp.ROOT, "ml", "models_v2")   # overridden by --models-dir
 WARMUP, N_REQ, N_SHAP_CASES, TOP = 10, 200, 30, 10
 rng = np.random.default_rng(42)
 
@@ -148,6 +149,10 @@ def baseline_check(pipe, texts):
 
 
 def main():
+    global MODELS
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--models-dir", default="ml/models_v2")
+    MODELS = os.path.join(pp.ROOT, ap.parse_args().models_dir)
     pipes, texts = load()
     report = {"system": system_info(),
               "setup": {"warmup_excluded": WARMUP, "requests": N_REQ,

@@ -1,0 +1,111 @@
+{
+  "model": "C:\\Project\\ml/models_v3\\category_model.pkl",
+  "n_test": 12256,
+  "overall_accuracy": 0.8862,
+  "deployed_threshold": {
+    "threshold": 0.85,
+    "n_auto": 8101,
+    "share_auto": 0.661,
+    "accuracy_auto": 0.9673,
+    "n_wrong_auto": 265,
+    "accuracy_human_routed": 0.728
+  },
+  "per_category_at_deployed": {
+    "bank_account": {
+      "n_test": 1582,
+      "share_auto": 0.6359,
+      "accuracy_auto": 0.9394
+    },
+    "credit_card": {
+      "n_test": 1577,
+      "share_auto": 0.5999,
+      "accuracy_auto": 0.9651
+    },
+    "credit_reporting": {
+      "n_test": 2303,
+      "share_auto": 0.6856,
+      "accuracy_auto": 0.9715
+    },
+    "debt_collection": {
+      "n_test": 3394,
+      "share_auto": 0.5899,
+      "accuracy_auto": 0.954
+    },
+    "mortgage": {
+      "n_test": 2977,
+      "share_auto": 0.7545,
+      "accuracy_auto": 0.9907
+    },
+    "student_loan": {
+      "n_test": 423,
+      "share_auto": 0.7612,
+      "accuracy_auto": 0.9596
+    }
+  },
+  "sweep": [
+    {
+      "threshold": 0.5,
+      "n_auto": 11491,
+      "share_auto": 0.9376,
+      "accuracy_auto": 0.91,
+      "n_wrong_auto": 1034,
+      "accuracy_human_routed": 0.5281
+    },
+    {
+      "threshold": 0.6,
+      "n_auto": 10779,
+      "share_auto": 0.8795,
+      "accuracy_auto": 0.9295,
+      "n_wrong_auto": 760,
+      "accuracy_human_routed": 0.5701
+    },
+    {
+      "threshold": 0.7,
+      "n_auto": 9937,
+      "share_auto": 0.8108,
+      "accuracy_auto": 0.9462,
+      "n_wrong_auto": 535,
+      "accuracy_human_routed": 0.6292
+    },
+    {
+      "threshold": 0.75,
+      "n_auto": 9430,
+      "share_auto": 0.7694,
+      "accuracy_auto": 0.9522,
+      "n_wrong_auto": 451,
+      "accuracy_human_routed": 0.666
+    },
+    {
+      "threshold": 0.8,
+      "n_auto": 8817,
+      "share_auto": 0.7194,
+      "accuracy_auto": 0.9608,
+      "n_wrong_auto": 346,
+      "accuracy_human_routed": 0.695
+    },
+    {
+      "threshold": 0.85,
+      "n_auto": 8101,
+      "share_auto": 0.661,
+      "accuracy_auto": 0.9673,
+      "n_wrong_auto": 265,
+      "accuracy_human_routed": 0.728
+    },
+    {
+      "threshold": 0.9,
+      "n_auto": 7112,
+      "share_auto": 0.5803,
+      "accuracy_auto": 0.9751,
+      "n_wrong_auto": 177,
+      "accuracy_human_routed": 0.7632
+    },
+    {
+      "threshold": 0.95,
+      "n_auto": 5434,
+      "share_auto": 0.4434,
+      "accuracy_auto": 0.9851,
+      "n_wrong_auto": 81,
+      "accuracy_human_routed": 0.8074
+    }
+  ]
+}

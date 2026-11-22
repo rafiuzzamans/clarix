@@ -143,11 +143,18 @@ class CaseService:
                 
         # AI Routing Logic
         # Route to human teams by default, but let AI Agent intercept high confidence issues
-        if ai_conf and ai_conf > 0.85:
-            # High confidence -> Route to AI Agent for auto-resolution
+        # Safeguard: Do not auto-resolve high/urgent predicted priority cases
+        AUTO_RESOLVE_THRESHOLD = 0.85
+        high_risk = (ai_priority or "").lower() in ("high", "urgent")
+        auto_resolution_skipped = False
+
+        if ai_conf and ai_conf > AUTO_RESOLVE_THRESHOLD and not high_risk:
+            # High confidence & non-high priority -> Route to AI Agent for auto-resolution
             case.assigned_to = "99999999-9999-9999-9999-999999999999"
             case.team_id = "88888888-8888-8888-8888-888888888888"
         else:
+            if ai_conf and ai_conf > AUTO_RESOLVE_THRESHOLD and high_risk:
+                auto_resolution_skipped = True
             # Route to human teams based on category
             if ai_cat in ("billing", "returns", "debt_collection", "credit_card"):
                 case.team_id = "33333333-3333-3333-3333-333333333333" # Billing Team
@@ -167,6 +174,20 @@ class CaseService:
             self.db, case.id, actor_id, "case_created",
             f"Case #{case.case_number} created via {data.source.value}"
         )
+        if auto_resolution_skipped:
+            await _add_timeline(
+                self.db, case.id, actor_id, "auto_resolution_skipped",
+                "High predicted priority: routed to human team",
+                meta={"ai_confidence": ai_conf, "ai_priority": ai_priority}
+            )
+            await _emit_audit(
+                action="auto_resolution_skipped",
+                actor_id=actor_id,
+                resource_id=str(case.id),
+                description="High predicted priority: routed to human team",
+                metadata={"ai_confidence": ai_conf, "ai_priority": ai_priority}
+            )
+
         await self.db.commit()
         await self.db.refresh(case)
 
@@ -394,6 +415,77 @@ class CaseService:
             query = query.where(CaseNote.is_internal == False)
         result = await self.db.execute(query.order_by(CaseNote.created_at.asc()))
         return [NoteOut.model_validate(n) for n in result.scalars().all()]
+
+    async def request_human_review(self, case_id: str, current_user: Any, reason: Optional[str] = None) -> CaseOut:
+        result = await self.db.execute(select(Case).where(Case.id == case_id))
+        case = result.scalar_one_or_none()
+        if not case:
+            raise HTTPException(status_code=404, detail="Case not found")
+
+        # Only the case's own customer (or staff) may call it
+        user_id_str = str(current_user.id)
+        role_val = getattr(current_user.role, "value", str(current_user.role))
+        is_owner = str(case.customer_id) == user_id_str
+        is_staff = role_val in ("agent", "supervisor", "manager", "admin")
+        if not (is_owner or is_staff):
+            raise HTTPException(status_code=403, detail="Not authorized to request review for this case")
+
+        # Only allowed if the case is currently resolved
+        if case.status != CaseStatus.resolved:
+            raise HTTPException(status_code=409, detail="Case is not in resolved status")
+
+        # Only allowed if resolved by AI agent
+        AI_AGENT_ID = "99999999-9999-9999-9999-999999999999"
+        is_ai_resolved = (str(case.assigned_to) == AI_AGENT_ID)
+        if not is_ai_resolved:
+            # Check timeline for AI resolution
+            tl_result = await self.db.execute(
+                select(CaseTimeline).where(CaseTimeline.case_id == case.id)
+            )
+            for tl in tl_result.scalars():
+                if str(tl.actor_id) == AI_AGENT_ID or tl.event_type == "case_resolved_by_ai":
+                    is_ai_resolved = True
+                    break
+
+        if not is_ai_resolved:
+            raise HTTPException(status_code=409, detail="Only AI-resolved cases can be submitted for human review")
+
+        # Effect:
+        case.status = CaseStatus.open
+        case.resolved_at = None
+        case.assigned_to = None
+
+        cat_val = case.ai_category or (case.category.value if case.category else None) or ""
+        if cat_val in ("billing", "returns", "debt_collection", "credit_card"):
+            case.team_id = "33333333-3333-3333-3333-333333333333"  # Billing Team
+        elif cat_val in ("technical_support", "mortgage", "bank_account"):
+            case.team_id = "22222222-2222-2222-2222-222222222222"  # Tier 2 Support
+        else:
+            case.team_id = "11111111-1111-1111-1111-111111111111"  # Tier 1 Support
+
+        await _add_timeline(
+            self.db, case.id, user_id_str, "human_review_requested",
+            f"Customer requested human review{': ' + reason if reason else ''}",
+            old_value="resolved", new_value="open", meta={"reason": reason}
+        )
+        await self.db.commit()
+        await self.db.refresh(case)
+
+        await _emit_audit(
+            action="human_review_requested",
+            actor_id=user_id_str,
+            resource_id=str(case.id),
+            description="Human review requested for AI-resolved case",
+            metadata={"previous_status": "resolved", "resolved_by": "ai", "reason": reason}
+        )
+
+        await _notify_automation("case_status_changed", str(case.id), {
+            "status": "open",
+            "customer_id": str(case.customer_id)
+        })
+
+        return CaseOut.model_validate(case)
+
 
 
 

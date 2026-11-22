@@ -32,6 +32,10 @@ class CaseEscalate(BaseModel):
     reason: str
 
 
+class RequestReview(BaseModel):
+    reason: Optional[str] = None
+
+
 class CaseOut(BaseModel):
     id: UUID
     case_number: int

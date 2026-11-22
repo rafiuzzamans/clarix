@@ -49,9 +49,10 @@ async def auto_resolve_cases():
                             else:
                                 terms_str = terms[0]
                             draft += f"\n\nReasoning: The AI system classified this case as '{cat}' primarily due to the presence of key terms such as {terms_str}."
+                        draft += "\n\nIf this does not resolve your complaint, use 'Request human review' on this case."
                     except Exception as e:
                         print(f"[AGENT] Error generating reply: {e}")
-                        draft = "This issue was automatically resolved by the AI system."
+                        draft = "This issue was automatically resolved by the AI system.\n\nIf this does not resolve your complaint, use 'Request human review' on this case."
                     
                     now = datetime.now(timezone.utc)
                     

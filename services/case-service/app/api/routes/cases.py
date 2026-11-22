@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_agent_or_above, require_supervisor_or_above
 from app.models.case import CaseCategory, CasePriority, CaseStatus
 from app.models.user import User
-from app.schemas.case import CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate, NoteUpdate
+from app.schemas.case import CaseAssign, CaseCreate, CaseEscalate, CaseOut, CaseUpdate, NoteCreate, NoteUpdate, RequestReview
 from app.services.case_service import CaseService
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -93,6 +93,18 @@ async def escalate_case(
     _=Depends(require_agent_or_above),
 ):
     return await CaseService(db).escalate_case(case_id, body, current_user.id)
+
+
+@router.post("/{case_id}/request-review", response_model=CaseOut, summary="Request human review for AI-resolved case")
+async def request_review(
+    case_id: str,
+    body: Optional[RequestReview] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    reason = body.reason if body else None
+    return await CaseService(db).request_human_review(case_id, current_user, reason)
+
 
 
 @router.post("/{case_id}/notes", summary="Add a note to a case")

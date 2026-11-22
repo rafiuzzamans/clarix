@@ -22,6 +22,8 @@ export default function CaseDetailPage() {
   const [isInternal, setIsInternal] = useState(true);
   const [escalateReason, setEscalateReason] = useState("");
   const [showEscalate, setShowEscalate] = useState(false);
+  const [showRequestReview, setShowRequestReview] = useState(false);
+  const [reviewReason, setReviewReason] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteContent, setEditNoteContent] = useState("");
 
@@ -82,6 +84,19 @@ export default function CaseDetailPage() {
     },
   });
 
+  const requestReviewMutation = useMutation({
+    mutationFn: () => casesApi.requestReview(id, reviewReason),
+    onSuccess: () => {
+      setShowRequestReview(false);
+      setReviewReason("");
+      qc.invalidateQueries({ queryKey: ["case", id] });
+      toast.success("A member of our team will review your complaint.");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.detail || "Failed to request review.");
+    },
+  });
+
   const generateReplyMutation = useMutation({
     mutationFn: () => aiApi.generateReply(
       caseData?.message || "",
@@ -105,6 +120,11 @@ export default function CaseDetailPage() {
 
   const c = caseData;
   const canEdit = user?.role !== "customer";
+  const AI_AGENT_ID = "99999999-9999-9999-9999-999999999999";
+  const isAiResolved = c?.status === "resolved" && (
+    c?.assigned_to === AI_AGENT_ID ||
+    timeline.some((t: any) => t.actor_id === AI_AGENT_ID || t.event_type === "case_resolved_by_ai")
+  );
 
   return (
     <div className="animate-fade-in">
@@ -424,6 +444,56 @@ export default function CaseDetailPage() {
               >
                 Close Case
               </button>
+            </div>
+          )}
+
+          {/* Request Human Review for AI-Resolved Cases */}
+          {isAiResolved && (
+            <div className="card border-blue-500/30 bg-blue-950/20 space-y-3">
+              <div className="flex items-center gap-2 text-blue-400">
+                <User className="w-4 h-4" />
+                <h3 className="text-sm font-semibold uppercase tracking-wider">Human Review</h3>
+              </div>
+              <p className="text-xs text-slate-400">
+                This case was resolved automatically by AI. If this does not resolve your complaint, you can request a review by our team.
+              </p>
+              {!showRequestReview ? (
+                <button
+                  id="request-review-btn"
+                  onClick={() => setShowRequestReview(true)}
+                  className="btn-secondary w-full justify-center flex items-center gap-2 text-sm text-blue-300 hover:text-blue-200 border-blue-500/30"
+                >
+                  <User className="w-4 h-4" /> Request human review
+                </button>
+              ) : (
+                <div className="space-y-2 animate-fade-in">
+                  <textarea
+                    className="input-field text-sm resize-none"
+                    rows={2}
+                    placeholder="Optional: Tell us what was not resolved..."
+                    value={reviewReason}
+                    onChange={(e) => setReviewReason(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => requestReviewMutation.mutate()}
+                      disabled={requestReviewMutation.isPending}
+                      className="btn-primary flex-1 justify-center text-sm"
+                    >
+                      {requestReviewMutation.isPending ? "Submitting..." : "Confirm Request"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowRequestReview(false);
+                        setReviewReason("");
+                      }}
+                      className="btn-secondary text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

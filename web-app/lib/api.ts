@@ -79,6 +79,8 @@ export const casesApi = {
     apiClient.post(`/api/cases/${id}/assign`, { agent_id, team_id }),
   escalate: (id: string, reason: string) =>
     apiClient.post(`/api/cases/${id}/escalate`, { reason }),
+  requestReview: (id: string, reason?: string) =>
+    apiClient.post(`/api/cases/${id}/request-review`, { reason }),
   getNotes: (id: string) => apiClient.get(`/api/cases/${id}/notes`),
   addNote: (id: string, content: string, is_internal = true) =>
     apiClient.post(`/api/cases/${id}/notes`, { content, is_internal }),

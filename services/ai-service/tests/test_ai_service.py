@@ -43,39 +43,28 @@ class TestTextCleaning:
         assert "  " not in result
 
 
-class TestSyntheticDataGeneration:
-    def test_generates_correct_count(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(100)
-        assert len(df) == 100
+class TestClassBalancing:
+    """balance_classes() caps large classes and upsamples small ones."""
 
-    def test_has_required_columns(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(50)
-        for col in ["text", "category", "priority", "sentiment", "cleaned_text"]:
-            assert col in df.columns
+    def _df(self):
+        import pandas as pd
+        rows = ([("a b c", "big")] * 50) + ([("d e f", "small")] * 5)
+        return pd.DataFrame(rows, columns=["text", "label"])
 
-    def test_categories_are_valid(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(200)
-        VALID = {"billing","technical_support","account","shipping","returns",
-                 "product_inquiry","complaint","feedback"}
-        assert set(df["category"].unique()).issubset(VALID)
+    def test_caps_majority_class(self):
+        from app.ml.train import balance_classes
+        out = balance_classes(self._df(), "text", "label", max_per_class=20, min_per_class=10)
+        assert (out["label"] == "big").sum() == 20
 
-    def test_priorities_are_valid(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(200)
-        assert set(df["priority"].unique()).issubset({"low","medium","high","urgent"})
+    def test_upsamples_minority_class(self):
+        from app.ml.train import balance_classes
+        out = balance_classes(self._df(), "text", "label", max_per_class=20, min_per_class=10)
+        assert (out["label"] == "small").sum() == 10
 
-    def test_sentiments_are_valid(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(200)
-        assert set(df["sentiment"].unique()).issubset({"positive","neutral","negative"})
-
-    def test_no_empty_texts(self):
-        from app.ml.train import generate_synthetic_dataset
-        df = generate_synthetic_dataset(100)
-        assert not df["text"].str.strip().eq("").any()
+    def test_keeps_columns(self):
+        from app.ml.train import balance_classes
+        out = balance_classes(self._df(), "text", "label", max_per_class=20, min_per_class=10)
+        assert list(out.columns) == ["text", "label"]
 
 
 class TestPredictorFallback:
@@ -88,7 +77,7 @@ class TestPredictorFallback:
         registry._loaded = False
 
         result = predict("I need help with my account")
-        assert result["label_category"] == "other"
+        assert result["label_category"] == "bank_account"  # safe default label
         assert result["label_priority"] == "medium"
         assert result["label_sentiment"] == "neutral"
         assert result["confidence"] == 0.0
@@ -112,29 +101,27 @@ class TestModelTraining:
 
     def test_pipeline_builds(self):
         from sklearn.linear_model import LogisticRegression
-        from app.ml.train import build_pipeline
-        pipeline = build_pipeline(LogisticRegression(max_iter=100))
+        from app.ml.train import tfidf_pipeline
+        pipeline = tfidf_pipeline(LogisticRegression(max_iter=100))
         assert pipeline is not None
         assert "tfidf" in pipeline.named_steps
         assert "clf" in pipeline.named_steps
 
     def test_tfidf_config(self):
-        from app.ml.train import build_pipeline
+        from app.ml.train import tfidf_pipeline
         from sklearn.linear_model import LogisticRegression
-        pipeline = build_pipeline(LogisticRegression())
+        pipeline = tfidf_pipeline(LogisticRegression())
         tfidf = pipeline.named_steps["tfidf"]
         assert tfidf.ngram_range == (1, 2)
-        assert tfidf.max_features == 10000
+        assert tfidf.max_features == 15000
         assert tfidf.sublinear_tf is True
 
-    @pytest.mark.slow
-    def test_full_training_run(self, tmp_path):
-        """Full training pipeline — marked as slow, skipped in fast CI."""
-        import os
-        from app.ml.train import train_all
-        # Override models dir
-        os.environ["MODELS_PATH"] = str(tmp_path)
-        results = train_all()
-        for model_name in ["category", "priority", "sentiment"]:
-            assert model_name in results
-            assert results[model_name]["accuracy"] > 0.3  # reasonable floor
+    def test_pipeline_fits_and_predicts(self):
+        from sklearn.linear_model import LogisticRegression
+        from app.ml.train import tfidf_pipeline
+        X = ["mortgage escrow foreclosure", "student loan servicer deferment"] * 5
+        y = ["mortgage", "student_loan"] * 5
+        pipe = tfidf_pipeline(LogisticRegression(max_iter=100))
+        pipe.set_params(tfidf__min_df=1)
+        pipe.fit(X, y)
+        assert pipe.predict(["escrow foreclosure"])[0] == "mortgage"

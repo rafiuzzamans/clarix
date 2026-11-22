@@ -177,6 +177,8 @@ class TestAnalyticsAPI:
         for k in extra_keys:
             if k not in ("DATABASE_URL", "AUDIT_SERVICE_URL"):
                 os.environ.pop(k, None)
+        # A machine-level DEBUG=release (or similar) breaks Settings.DEBUG (bool)
+        os.environ.pop("DEBUG", None)
                 
         with patch("app.core.database.get_db", new_callable=AsyncMock) as mock_db:
             mock_db.return_value.__aenter__ = AsyncMock(return_value=MagicMock())

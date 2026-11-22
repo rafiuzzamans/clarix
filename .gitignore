@@ -91,3 +91,4 @@ archive*.zip
 
 # ─── Temp helper scripts ─────────────────────────────────────
 create_git_history.py
+ml/models_v3/*.pkl

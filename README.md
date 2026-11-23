@@ -212,7 +212,7 @@ Auto-generated Swagger UI available at:
 ## 🧪 Running Tests
 
 ### Backend (Unit & Integration)
-Run the complete suite (203 service tests + 37 cross-service integration tests; 239 passed, 1 skipped) from the root directory:
+Run the complete suite (213 service tests + 37 cross-service integration tests; 249 passed, 1 skipped) from the root directory:
 ```bash
 python -m pytest services/ tests/ -v
 ```
